@@ -1,0 +1,247 @@
+[
+  {
+    "key": "Sr.No",
+    "label": "Serial number",
+    "type": "int"
+  },
+  {
+    "key": "Wall ID",
+    "label": "Wall ID",
+    "type": "string"
+  },
+  {
+    "key": "Reference",
+    "label": "Reference",
+    "type": "string"
+  },
+  {
+    "key": "Reference ID",
+    "label": "Reference ID",
+    "type": "int"
+  },
+  {
+    "key": "Wall ID in original publication",
+    "label": "Wall ID in original publication",
+    "type": "string"
+  },
+  {
+    "key": "Length [cm]",
+    "label": "Length",
+    "unit": "cm",
+    "type": "float",
+    "precision": 0
+  },
+  {
+    "key": "Height [cm]",
+    "label": "Height",
+    "unit": "cm",
+    "type": "float",
+    "precision": 0
+  },
+  {
+    "key": "Width [cm]",
+    "label": "Width",
+    "unit": "cm",
+    "type": "float",
+    "precision": 0
+  },
+  {
+    "key": "No of leaves",
+    "label": "Number of leaves",
+    "type": "int"
+  },
+  {
+    "key": "Wall volume [m^3]",
+    "label": "Wall volume",
+    "unit": "m³",
+    "type": "float",
+    "precision": 2
+  },
+  {
+    "key": "Stones Volume [m^3]",
+    "label": "Stones volume",
+    "unit": "m³",
+    "type": "float",
+    "precision": 2
+  },
+  {
+    "key": "Percentage of volumetric stone ratio",
+    "label": "Volumetric stone ratio",
+    "unit": "%",
+    "type": "float",
+    "precision": 2
+  },
+  {
+    "key": "Average shape factor",
+    "label": "Average shape factor",
+    "type": "float",
+    "precision": 2,
+    "bins": [
+      {
+        "name": "NF",
+        "fullName": "Not Fulfilled (< 0.57)",
+        "min": 0,
+        "max": 0.57
+      },
+      {
+        "name": "PF",
+        "fullName": "Partially Fulfilled (0.57-0.73)",
+        "min": 0.57,
+        "max": 0.73
+      },
+      {
+        "name": "F",
+        "fullName": "Fulfilled (≥ 0.73)",
+        "min": 0.73,
+        "max": "Infinity"
+      }
+    ]
+  },
+  {
+    "key": "Average vertical LMT",
+    "label": "Average vertical LMT",
+    "type": "float",
+    "precision": 2,
+    "bins": [
+      {
+        "name": "NF",
+        "fullName": "Not Fulfilled (< 1.4)",
+        "min": 0,
+        "max": 1.4
+      },
+      {
+        "name": "PF",
+        "fullName": "Partially Fulfilled (1.4-1.6)",
+        "min": 1.4,
+        "max": 1.6
+      },
+      {
+        "name": "F",
+        "fullName": "Fulfilled (≥ 1.6)",
+        "min": 1.6,
+        "max": "Infinity"
+      }
+    ]
+  },
+  {
+    "key": "Average horizontal LMT",
+    "label": "Average horizontal LMT",
+    "type": "float",
+    "precision": 2,
+    "bins": [
+      {
+        "name": "F",
+        "fullName": "Fulfilled (< 1.06)",
+        "min": 0,
+        "max": 1.06
+      },
+      {
+        "name": "PF",
+        "fullName": "Partially Fulfilled (1.06-1.11)",
+        "min": 1.06,
+        "max": 1.11
+      },
+      {
+        "name": "NF",
+        "fullName": "Not Fulfilled (≥ 1.11)",
+        "min": 1.11,
+        "max": "Infinity"
+      }
+    ]
+  },
+  {
+    "key": "Average LMT for wall leaf connection",
+    "label": "Average LMT for wall-leaf connection",
+    "type": "float",
+    "precision": 2,
+    "bins": [
+      {
+        "name": "NF",
+        "fullName": "Not Fulfilled (< 1.25)",
+        "min": 0,
+        "max": 1.25
+      },
+      {
+        "name": "PF",
+        "fullName": "Partially Fulfilled (1.25-1.55)",
+        "min": 1.25,
+        "max": 1.55
+      },
+      {
+        "name": "F",
+        "fullName": "Fulfilled (≥ 1.55)",
+        "min": 1.55,
+        "max": "Infinity"
+      }
+    ]
+  },
+  {
+    "key": "Typology based on Italian Code",
+    "label": "Typology",
+    "type": "string"
+  },
+  {
+    "key": "Vertical_GMQI",
+    "label": "Vertical MQI",
+    "type": "float",
+    "precision": 2
+  },
+  {
+    "key": "In-plane_GMQI",
+    "label": "In-plane MQI",
+    "type": "float",
+    "precision": 2
+  },
+  {
+    "key": "Out-of-plane_GMQI",
+    "label": "Out-of-plane MQI",
+    "type": "float",
+    "precision": 2
+  },
+  {
+    "key": "Vertical loading_GMQI_class",
+    "label": "Vertical MQI class",
+    "type": "string"
+  },
+  {
+    "key": "In-plane_GMQI_class",
+    "label": "In-plane MQI class",
+    "type": "string"
+  },
+  {
+    "key": "Out-of-plane_GMQI_class",
+    "label": "Out-of-plane MQI class",
+    "type": "string"
+  },
+  {
+    "key": "Microstructure type",
+    "label": "Microstructure type",
+    "type": "string"
+  },
+  {
+    "key": "Not Fulfill (l<20 cm) [%]",
+    "label": "Not Fulfilled (< 20 cm)",
+    "unit": "%",
+    "type": "float",
+    "precision": 2
+  },
+  {
+    "key": "Partial Fulfill (20cm-40cm) [%]",
+    "label": "Partially Fulfilled (20 cm - 40 cm)",
+    "unit": "%",
+    "type": "float",
+    "precision": 2
+  },
+  {
+    "key": "Fulfill (l>40cm) [%]",
+    "label": "Fulfilled (> 40 cm)",
+    "unit": "%",
+    "type": "float",
+    "precision": 2
+  },
+  {
+    "key": "Orientation (Up and Front)",
+    "label": "Orientation",
+    "type": "string"
+  }
+]
