@@ -281,6 +281,7 @@ export class AsyncResult<T, E = ErrorBase> {
     return undefined as T;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static _runGeneratorProcessor<T, E>(iterator: Generator<AsyncResult<any, any>, T, any>): () => Promise<Result<T, E>> {
     return async (): Promise<Result<T, E>> => {
       let result = iterator.next();
@@ -305,6 +306,7 @@ export class AsyncResult<T, E = ErrorBase> {
     return AsyncResult.fromResultPromise<T, E>(AsyncResult._runGeneratorProcessor<T, E>(iterator)());
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   runInPlace(generatorFunc: () => Generator<AsyncResult<any, any>, T, any>) {
     const iterator = generatorFunc();
     this.updateFromResultPromise(AsyncResult._runGeneratorProcessor<T, E>(iterator)());

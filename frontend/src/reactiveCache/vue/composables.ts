@@ -1,4 +1,4 @@
-import { WatchSource } from "vue";
+import type { WatchSource } from "vue";
 import { AsyncResult, type FlatChainFunction } from "../core/asyncResult";
 import type { Result } from "../core/result";
 
@@ -80,12 +80,18 @@ export function useReactiveAction<I, O, E>(input: I | Ref<I> | (() => I), pipe: 
   return outputRef;
 }
 
-export function useGenerator<T>(generatorFunc: () => Generator<AsyncResult<any, any>, T, any>): Ref<AsyncResult<T, any>> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type RunnableGenerator<T> = Generator<AsyncResult<any, any>, T, any>;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useGenerator<T>(generatorFunc: () =>RunnableGenerator<T>): Ref<AsyncResult<T, any>> {
   const resultRef = useAsyncResultRef(AsyncResult.run(generatorFunc));
   return resultRef;
 }
 
-export function useLazyGenerator<T>(generatorFunc: () => Generator<AsyncResult<any, any>, T, any>): { resultRef: Ref<AsyncResult<T, any>>, trigger: () => void } {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function useLazyGenerator<T>(generatorFunc: () =>RunnableGenerator<T>): { resultRef: Ref<AsyncResult<T, any>>, trigger: () => void } {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const result = new AsyncResult<T, any>();
   const resultRef = useAsyncResultRef(result);
 
@@ -96,7 +102,7 @@ export function useLazyGenerator<T>(generatorFunc: () => Generator<AsyncResult<a
   return { resultRef, trigger };
 }
 
-export function useReactiveGenerator<T, E, Inputs>(source: WatchSource<Inputs>, generatorFunc: (args: Inputs) => Generator<AsyncResult<any, any>, T, any>, options:{ immediate: boolean } = { immediate: true }): Ref<AsyncResult<T, E>> {
+export function useReactiveGenerator<T, E, Inputs>(source: WatchSource<Inputs>, generatorFunc: (args: Inputs) => RunnableGenerator<T>, options:{ immediate: boolean } = { immediate: true }): Ref<AsyncResult<T, E>> {
   const resultRef = useAsyncResultRef(new AsyncResult<T, E>());
 
   watch(source, (newInputs) => {

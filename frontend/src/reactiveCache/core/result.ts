@@ -74,6 +74,7 @@ export class Result<T, E = ErrorBase> {
     return Result.err<E>(this._state.error);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   *[Symbol.iterator](): Generator<Result<T, E>, T, any> {
     yield this;
 
