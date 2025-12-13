@@ -3,7 +3,7 @@ import { defineStore } from "pinia";
 import proj4 from "proj4";
 import { AsyncResult, KeyedAsyncCache, Result } from "unwrapped/core";
 import Papa from "papaparse";
-import { TransitSystemDesign } from "./designs";
+import type { TransitSystemDesign } from "./designs";
 
 export interface GameState {
     areaId: string;

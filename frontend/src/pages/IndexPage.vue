@@ -14,27 +14,6 @@ import { useRoute } from 'vue-router';
 const route = useRoute();
 const designs = useDesignsStore();
 
-const service = {
-  "services": [
-    {
-      "name": "Bus 1",
-      "stops": [944, 897, 849, 695, 477, 199, 73, 16],
-      "frequency": 5,
-      "capacity": 80,
-      "stopping_time": 0,
-      "travel_time": 1
-    },
-    {
-      "name": "Metro Line 1",
-      "stops": [522, 573, 569, 621, 616, 611, 551, 1068],
-      "frequency": 3,
-      "capacity": 100,
-      "stopping_time": 0,
-      "travel_time": 0.5
-    }
-  ]
-}
-
 const params = computed(() => {
   return {
     areaId: route.query.area as GameAreaId,
@@ -43,6 +22,4 @@ const params = computed(() => {
     design: designs.selectedDesign
   }
 });
-
-// status.value.debug("Data");
 </script>

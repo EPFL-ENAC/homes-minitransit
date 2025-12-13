@@ -34,7 +34,7 @@ function goToUpdatedParams(p: Partial<DemandPageUrlParams>) {
 
 function areaChanged(newId: GameAreaId) {
     designsStore.file = null;
-    goToUpdatedParams({ area: newId });
+    void goToUpdatedParams({ area: newId });
 }
 
 </script>

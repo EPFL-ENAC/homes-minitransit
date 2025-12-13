@@ -7,7 +7,6 @@ import 'maplibregl-theme-switcher/styles.css';
 import {
     // AttributionControl,
     // FullscreenControl,
-    type GeoJSONSource,
     // GeolocateControl,
     // LngLat,
     Map,
@@ -19,10 +18,9 @@ import {
     type StyleSpecification
 } from 'maplibre-gl';
 import { onMounted, useTemplateRef, watch } from 'vue';
-import type { Geometry } from 'geojson';
 import { useLazyAction, useAsyncResultCollection } from 'unwrapped/vue';
 import { AsyncResult, Result } from 'unwrapped/core';
-import { useGameAreasStore, type GameAreaDemandsItem, type GameState } from 'src/stores/gameAreasStore';
+import { useGameAreasStore, type GameState } from 'src/stores/gameAreasStore';
 import { addOrUpdateGeoJsonSourceToMap, cleanUpDesign, drawDesignToMap, getCenterPointOfGeoJSON } from './mapUtils';
 
 interface Props {

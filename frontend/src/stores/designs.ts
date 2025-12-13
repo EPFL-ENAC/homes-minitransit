@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref, watch, watchEffect } from "vue";
+import { ref, watch } from "vue";
 
 export interface FixedRouteService {
     name: string;
@@ -20,7 +20,7 @@ export const useDesignsStore = defineStore("designs", () => {
     const selectedDesign = ref<TransitSystemDesign | null>(null); 
     
     const fileReader = new FileReader();
-    fileReader.onload = (e) => {
+    fileReader.onload = () => {
         const asString = fileReader.result as string;
         const asJson = JSON.parse(asString);
         

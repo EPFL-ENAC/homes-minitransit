@@ -1,9 +1,6 @@
-import { Geometry } from 'geojson';
-import {
-    type GeoJSONSource,
-    Map,
-} from 'maplibre-gl';
-import { FixedRouteService, TransitSystemDesign } from 'src/stores/designs';
+import type { Geometry } from 'geojson';
+import type { GeoJSONSource, Map } from 'maplibre-gl';
+import type { FixedRouteService, TransitSystemDesign } from 'src/stores/designs';
 
 export function addOrUpdateGeoJsonSourceToMap(m: Map, geoJson: GeoJSON.FeatureCollection, sourceName: string) {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
