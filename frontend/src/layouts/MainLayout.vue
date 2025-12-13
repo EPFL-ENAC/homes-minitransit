@@ -1,12 +1,33 @@
 <template>
   <q-layout view="hHh lpR fFf">
-    <q-header bordered class="bg-white text-grey-10">
-      <app-toolbar @toggle-left="toggleLeftDrawer" :has-drawer="hasDrawer" />
+    <q-header elevated>
+      <q-toolbar>
+        <q-btn
+          flat
+          dense
+          round
+          icon="menu"
+          aria-label="Menu"
+          @click="toggleLeftDrawer"
+        />
+
+        <q-toolbar-title>
+          Quasar App
+        </q-toolbar-title>
+
+        <div>Quasar v{{ $q.version }}</div>
+      </q-toolbar>
     </q-header>
 
-    <left-drawer v-if="hasDrawer" ref="leftDrawerRef" @drawer-toggled="onDrawerToggled">
+    <q-drawer
+      v-model="leftDrawerOpen"
+      show-if-above
+      side="left"
+      bordered
+      width-hint="250"
+    >
       <router-view name="drawer" />
-    </left-drawer>
+    </q-drawer>
 
     <q-page-container>
       <router-view />
@@ -15,51 +36,11 @@
 </template>
 
 <script setup lang="ts">
-import { useQuasar } from 'quasar';
-import AppToolbar from 'src/components/AppToolbar.vue';
-import LeftDrawer from 'src/components/LeftDrawer.vue';
+import { ref } from 'vue';
 
-const $q = useQuasar();
-const route = useRoute();
-const leftDrawerRef = ref<InstanceType<typeof LeftDrawer> | null>(null);
+const leftDrawerOpen = ref(false);
 
-const hasDrawer = computed(() => {
-  return route.meta.hasDrawer === true;
-});
-
-watch([hasDrawer, $q.screen.gt.sm], async (value) => {
-  if (value) {
-    await nextTick(() => {
-      if (leftDrawerRef.value) {
-        if ($q.screen.gt.sm) {
-          leftDrawerRef.value.open();
-        }
-      }
-    });
-  } else {
-    await nextTick(() => {
-      if (leftDrawerRef.value) {
-        leftDrawerRef.value.close();
-      }
-    });
-  }
-}, { immediate: true });
-
-function toggleLeftDrawer() {
-  if (leftDrawerRef.value) {
-    leftDrawerRef.value.toggle();
-  }
-}
-
-function onDrawerToggled(isOpen: boolean) {
-  setTimeout(() => {
-    window.dispatchEvent(new CustomEvent('drawer-toggled', { detail: { isOpen } }))
-  }, 200) // Small delay to allow drawer animation to complete
+function toggleLeftDrawer () {
+  leftDrawerOpen.value = !leftDrawerOpen.value;
 }
 </script>
-
-<style lang="scss" scoped>
-.q-page {
-  padding: 0.7rem;
-}
-</style>
