@@ -42,6 +42,7 @@ function areaChanged(newId: GameAreaId) {
 <template>
     <q-scroll-area class="fit">
         <div class="q-pa-md">
+            <div class="text-h6 q-mb-md">Area</div>
             <q-list>
                 <template v-for="area in gameAreasList" :key="area.id">
                     <q-item
@@ -61,14 +62,16 @@ function areaChanged(newId: GameAreaId) {
             </q-list>
         </div>
 
-        <div class="q-pa-md">
-            <div class="q-gutter-sm">
+        <div class="q-pa-md q-mb-lg">
+            <div class="text-h6 q-mb-md">Demand</div>
+            <div class="q-gutter-sm q-mb-md">
                 <q-radio
                     :model-value="currentMode"
                     @update:model-value="(e) => goToUpdatedParams({ mode: e })"
                     dense
                     val="origin"
                     label="Origin"
+                    :disable="!currentAreaId"
                 />
                 <q-radio
                     :model-value="currentMode"
@@ -76,28 +79,32 @@ function areaChanged(newId: GameAreaId) {
                     dense
                     val="destination"
                     label="Destination"
+                    :disable="!currentAreaId"
+                />
+            </div>
+            <div>
+                <div class="text-subtitle1">Hour of the day</div>
+                <q-slider
+                    :model-value="currentHour"
+                    @update:model-value="(e) => goToUpdatedParams({ hour: e ?? 0 })"
+                    :min="0"
+                    :max="23"
+                    label
+                    :markers="4"
+                    marker-labels
+                    :disable="!currentAreaId"
                 />
             </div>
         </div>
 
         <div class="q-pa-md">
-            <q-slider
-                :model-value="currentHour"
-                @update:model-value="(e) => goToUpdatedParams({ hour: e ?? 0 })"
-                :min="0"
-                :max="23"
-                label
-                :markers="4"
-                marker-labels
-            />
-        </div>
-
-        <div class="q-pa-md">
+            <div class="text-h6 q-mb-md">Transit system design</div>
             <q-file
                 v-model="designsStore.file"
                 label="Add a design"
                 filled
                 clearable
+                :disable="!currentAreaId"
             />
         </div>
     </q-scroll-area>

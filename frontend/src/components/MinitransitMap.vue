@@ -91,9 +91,9 @@ watch(gameState, (newArea, oldArea) => {
             'interpolate',
             ['linear'],
             ['get', demandKey],
-            0, '#0000ff',
-            50, '#eeee00',
-            100, '#ff0000'
+            0, '#bbbbbb88',
+            50, '#eeee00ff',
+            100, '#ff0000ff'
         ]);
 
         if (newArea.design) {
