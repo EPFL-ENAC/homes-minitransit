@@ -95,6 +95,7 @@ export const useGameAreasStore = defineStore("gameAreas", () => {
         async (params: GameAreaGeometryParams) => {
             const r = await fetchJSON<HexagonGeoJSON>(`/game/areas/${params.areaId}.geojson`);
             const v = r.unwrapOrNull();
+            console.log(v);
             if (!v) {
                 return r;
             }
