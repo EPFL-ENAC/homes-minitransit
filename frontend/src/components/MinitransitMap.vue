@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import 'maplibre-gl/dist/maplibre-gl.css';
-import '@maplibre/maplibre-gl-geocoder/dist/maplibre-gl-geocoder.css';
-import 'maplibregl-theme-switcher/styles.css';
+// import '@maplibre/maplibre-gl-geocoder/dist/maplibre-gl-geocoder.css';
+// import 'maplibregl-theme-switcher/styles.css';
 // import MaplibreGeocoder from '@maplibre/maplibre-gl-geocoder';
 // import { ThemeSwitcherControl, ThemeDefinition } from 'maplibregl-theme-switcher';
 import {

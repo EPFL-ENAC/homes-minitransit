@@ -130,7 +130,7 @@ export function drawFixedRouteServiceToMap(m: Map, service: FixedRouteService, s
         return;
     }
 
-    const hexagonsData = hexagonsSource._data as GeoJSON.FeatureCollection;
+    const hexagonsData = hexagonsSource._data as unknown as GeoJSON.FeatureCollection;
     const coordsFromHexagons = getCoordsFromHexagons(hexagonsData, service.stops);
 
     const lineString: GeoJSON.Feature<GeoJSON.LineString> = {

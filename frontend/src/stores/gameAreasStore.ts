@@ -1,8 +1,7 @@
 import type { Geometry } from "geojson";
 import { defineStore } from "pinia";
 import proj4 from "proj4";
-import { AsyncResult, KeyedAsyncCache, Result } from "unwrapped/core";
-import Papa from "papaparse";
+import { KeyedAsyncCache, Result } from "unwrapped/core";
 import type { TransitSystemDesign } from "./designs";
 
 export interface GameState {
@@ -28,10 +27,10 @@ interface GameAreaGeometryParams {
     reprojectToWGS84?: boolean; // TODO Reproject on the backend, once
 }
 
+/*
 interface GameAreaDemandParams {
     areaId: string;
 }
-
 async function fetchCSV(url: string): Promise<Result<GameAreaRawDemands[]>> {
     return new Promise((resolve) => {
         Papa.parse(url, {
@@ -52,7 +51,7 @@ interface GameAreaRawDemands {
     start_hex_id: string;
     end_hex_id: string;
     demands: string;
-}
+}*/
 
 export interface GameAreaDemandsItem {
     startHexId: string;
@@ -60,8 +59,8 @@ export interface GameAreaDemandsItem {
     demands: number;
 }
 
+/*
 type GameAreaDemands = Map<number, GameAreaDemandsItem[]>;
-
 function processDemands(rawDemands: GameAreaRawDemands[]): GameAreaDemands {
     const demandsMap: GameAreaDemands = new Map();
 
@@ -88,14 +87,13 @@ function processDemands(rawDemands: GameAreaRawDemands[]): GameAreaDemands {
 interface GameArea {
     geoJson: HexagonGeoJSON;
     demands: GameAreaDemands;
-}
+}*/
 
 export const useGameAreasStore = defineStore("gameAreas", () => {
     const geoJsonCache = new KeyedAsyncCache<GameAreaGeometryParams, HexagonGeoJSON>(
         async (params: GameAreaGeometryParams) => {
             const r = await fetchJSON<HexagonGeoJSON>(`/game/areas/${params.areaId}.geojson`);
             const v = r.unwrapOrNull();
-            console.log(v);
             if (!v) {
                 return r;
             }
@@ -134,7 +132,7 @@ export const useGameAreasStore = defineStore("gameAreas", () => {
             return Result.ok(v);
         }
     );
-
+/*
     const demandCache = new KeyedAsyncCache<GameAreaDemandParams, GameAreaDemands>(
         async (params: GameAreaDemandParams) => {
             const r = await fetchCSV(`/game/areas/${params.areaId}_demands.csv`);
@@ -143,12 +141,12 @@ export const useGameAreasStore = defineStore("gameAreas", () => {
             }
             return Result.ok(processDemands(r.unwrapOr([])));
         }
-    );
+    );*/
 
     function getGameAreaGeometry(params: GameAreaGeometryParams) {
         return geoJsonCache.get(params);
     }
-
+/*
     function getGameAreaDemands(params: GameAreaDemandParams) {
         return demandCache.get(params);
     }
@@ -163,11 +161,11 @@ export const useGameAreasStore = defineStore("gameAreas", () => {
                 demands,
             } as GameArea;
         });
-    }
+    }*/
 
     return {
-        getGameArea,
+        // getGameArea,
         getGameAreaGeometry,
-        getGameAreaDemands
+        // getGameAreaDemands
     };
 });
