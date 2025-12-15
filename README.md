@@ -1,6 +1,6 @@
-# MMS Database
+# MiniTransit
 
-_Masonry MicroStructure Database_
+_MiniTransit_
 
 ## Requirements
 
