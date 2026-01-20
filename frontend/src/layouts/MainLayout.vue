@@ -2,36 +2,27 @@
   <q-layout view="hHh lpR fFf">
     <q-header elevated>
       <q-toolbar>
-        <q-btn
-          flat
-          dense
-          round
-          icon="menu"
-          aria-label="Menu"
-          @click="toggleLeftDrawer"
-        />
-
+        <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
+        
         <q-toolbar-title>
           Quasar App
         </q-toolbar-title>
-
-        <div>Quasar v{{ $q.version }}</div>
+        
+        <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleRightDrawer" />
       </q-toolbar>
     </q-header>
 
-    <q-drawer
-      v-model="leftDrawerOpen"
-      show-if-above
-      side="left"
-      bordered
-      width-hint="250"
-    >
+    <q-drawer v-model="leftDrawerOpen" show-if-above side="left" bordered width-hint="250">
       <router-view name="drawer" />
     </q-drawer>
 
     <q-page-container>
       <router-view />
     </q-page-container>
+
+    <q-drawer v-model="rightDrawerOpen" show-if-above side="right" bordered width-hint="350">
+      <router-view name="rightDrawer" />
+    </q-drawer>
   </q-layout>
 </template>
 
@@ -39,8 +30,13 @@
 import { ref } from 'vue';
 
 const leftDrawerOpen = ref(false);
+const rightDrawerOpen = ref(false);
 
-function toggleLeftDrawer () {
+function toggleLeftDrawer() {
   leftDrawerOpen.value = !leftDrawerOpen.value;
+}
+
+function toggleRightDrawer() {
+  rightDrawerOpen.value = !rightDrawerOpen.value;
 }
 </script>

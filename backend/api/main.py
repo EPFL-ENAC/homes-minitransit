@@ -8,9 +8,7 @@ from fastapi_cache import FastAPICache
 from api.config import config
 from logging import basicConfig, INFO
 from pydantic import BaseModel
-from api.views.compute import router as compute_router
-from api.views.files import router as files_router
-from api.views.properties import router as properties_router
+from api.views.simulation import router as simulation_router
 
 basicConfig(level=INFO)
 
@@ -55,19 +53,7 @@ async def get_health() -> HealthCheck:
 
 
 app.include_router(
-    compute_router,
-    prefix="/compute",
-    tags=["Compute"],
-)
-
-app.include_router(
-    files_router,
-    prefix="/files",
-    tags=["Files"],
-)
-
-app.include_router(
-    properties_router,
-    prefix="/properties",
-    tags=["Properties"],
+    simulation_router,
+    prefix="/simulation",
+    tags=["Simulation"],
 )

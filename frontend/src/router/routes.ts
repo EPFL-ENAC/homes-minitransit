@@ -9,6 +9,7 @@ const routes: RouteRecordRaw[] = [
         path: '',
         components: {
           drawer: () => import('src/drawers/DemandPageDrawer.vue'),
+          rightDrawer: () => import('src/drawers/InspectorDrawer.vue'),
           default: () => import('pages/IndexPage.vue')
         }
       },

@@ -3,21 +3,18 @@ import { defineStore } from "pinia";
 import proj4 from "proj4";
 import { KeyedAsyncCache, Result } from "unwrapped/core";
 import type { TransitSystemDesign } from "./designs";
+import { fetchJSON } from "./utils";
+
+export type GameAreaMode = "origin" | "destination";
 
 export interface GameState {
     areaId: string;
     hour: number;
-    mode: "origin" | "destination";
+    mode: GameAreaMode;
     design: TransitSystemDesign | null;
-}
-
-async function fetchJSON<T>(url: string): Promise<Result<T>> {
-    const response = await fetch(url);
-    if (!response.ok) {
-        return Result.errTag(`fetch-failed`, response.statusText);
-    }
-    const json = await response.json();
-    return Result.ok(json as T);
+    simulationId: string | null;
+    pickedHexId: number | null;
+    pickedServiceName: string | null;
 }
 
 type HexagonGeoJSON = GeoJSON.FeatureCollection<Geometry & { coordinates: [number, number][][] }>;

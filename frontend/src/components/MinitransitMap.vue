@@ -21,12 +21,13 @@ import { onMounted, useTemplateRef, watch } from 'vue';
 import { useLazyAction, useAsyncResultCollection } from 'unwrapped/vue';
 import { AsyncResult, Result } from 'unwrapped/core';
 import { useGameAreasStore, type GameState } from 'src/stores/gameAreasStore';
-import { addOrUpdateGeoJsonSourceToMap, cleanUpDesign, drawDesignToMap, getCenterPointOfGeoJSON } from './mapUtils';
+import { addOrUpdateGeoJsonSourceToMap, drawDesignToMap, drawRoutesOnMap, getCenterPointOfGeoJSON, setupHexagonInteractivity } from './mapUtils';
+import { type SimulationRoute, useSimulationsStore } from 'src/stores/simulation';
 
 interface Props {
-    style?: string | StyleSpecification | undefined
+    style?: string | StyleSpecification | undefined;
     center?: LngLatLike;
-    zoom?: number
+    zoom?: number;
     /* minZoom?: number
     maxZoom?: number
     themes?: ThemeDefinition[]
@@ -38,6 +39,12 @@ const props = defineProps<Props>();
 
 const gameState = defineModel<GameState>("gameState");
 const gameAreaStore = useGameAreasStore();
+const simulationsStore = useSimulationsStore();
+
+const emit = defineEmits<{
+    (e: "hexagonClicked", hexId: number, properties: Record<string, unknown>): void;
+    (e: "serviceClicked", serviceName: string): void;
+}>();
 
 const { resultRef: map, trigger: loadMap } = useLazyAction<Map>(() => {
     return new Promise<Result<Map>>((resolve) => {
@@ -49,7 +56,6 @@ const { resultRef: map, trigger: loadMap } = useLazyAction<Map>(() => {
         });
 
         void m.once('load', () => {
-            setTimeout(() => { resolve(Result.ok(m)); }, 3000);
             resolve(Result.ok(m));
         });
     });
@@ -62,18 +68,26 @@ const container = useTemplateRef<HTMLDivElement>('container');
 onMounted(() => {
     loadMap();
     tasks.value.add("map", map.value, false);
+    updateState(gameState.value, undefined);
 });
 
-watch(gameState, (newArea, oldArea) => {
-    if (!newArea) return;
+watch(gameState, (newState, oldState) => {
+    updateState(newState, oldState);
+});
 
-    return tasks.value.add(`area-${crypto.randomUUID()}`, AsyncResult.run(function *() {
+let eventCleanup: (() => void) | null = null;
+let designCleanup: (() => void) | null = null;
+
+function updateState(newState: GameState | undefined, oldState: GameState | undefined) {
+    if (!newState) return;
+
+    return tasks.value.add(`area-${crypto.randomUUID()}`, AsyncResult.run(function* () {
         const m = yield* map.value;
 
-        const demandKey = `${newArea.mode === 'origin' ? 'Out' : 'In'}_${newArea.hour}`;
-        if (newArea.areaId !== oldArea?.areaId) {
+        const demandKey = `${newState.mode === 'origin' ? 'Out' : 'In'}_${newState.hour}`;
+        if (newState.areaId !== oldState?.areaId) {
             const geometry = yield* gameAreaStore.getGameAreaGeometry({
-                areaId: newArea.areaId,
+                areaId: newState.areaId,
                 reprojectToWGS84: true
             });
 
@@ -87,28 +101,72 @@ watch(gameState, (newArea, oldArea) => {
             });
         }
 
+        eventCleanup?.();
+        eventCleanup = setupHexagonInteractivity(m, "data", demandKey, (hexId, properties) => {
+            emit("hexagonClicked", hexId, properties);
+        });
         m.setPaintProperty("data-fill", "fill-color", [
-            'interpolate',
-            ['linear'],
-            ['get', demandKey],
-            0, '#bbbbbb88',
-            50, '#eeee00ff',
-            100, '#ff0000ff'
+            "interpolate",
+            ["linear"],
+            ["get", demandKey],
+            0, "rgb(187, 187, 187)",
+            1, "rgb(0, 0, 255)",
+            200, "rgb(255, 0, 0)"
+        ]);
+        m.setPaintProperty("data-fill", "fill-opacity", [
+            "case",
+            ["boolean", ["feature-state", "hover"], false],
+            1.0,
+            0.6
         ]);
 
-        if (newArea.design) {
-            drawDesignToMap(m, newArea.design, "data");
-        } else if (oldArea?.design) {
-            cleanUpDesign(m, oldArea.design);
+        designCleanup?.();
+        if (newState.design) {
+            designCleanup = drawDesignToMap(m, newState.design, "data", (service) => {
+                emit("serviceClicked", service.name);
+            }, newState.pickedServiceName ?? undefined);
+        } else if (oldState?.design) {
+            designCleanup = null;
         }
+
+        const simulationId = newState.simulationId ?? "test";
+        if (!simulationId) return;
+
+        yield* simulationsStore.getSimulationResult({
+            simulationId: simulationId,
+        });
+
+        let routes: SimulationRoute[] = [];
+
+        if (newState.pickedHexId) {
+            routes = yield* simulationsStore.getSimulationRoute(
+                newState.mode === "origin" ? {
+                    simulationParams: {
+                        simulationId: simulationId,
+                    },
+                    type: "out",
+                    startHexId: newState.pickedHexId
+                } : {
+                    simulationParams: {
+                        simulationId: simulationId,
+                    },
+                    type: "in",
+                    endHexId: newState.pickedHexId
+                }
+            );
+        }
+
+        drawRoutesOnMap(m, routes, "data", "simulation-routes");
+
+        console.log("Routes for picked hexagon:", routes);
     }));
-});
+}
 
 </script>
 
 <template>
     <div ref="container" class="maplibre-map"></div>
-    <div v-if="tasks.anyLoading()" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-80">
+    <div v-if="tasks.anyLoading()" class="loading-overlay">
         <q-spinner-dots color="primary" size="100px" />
     </div>
 </template>
@@ -117,5 +175,18 @@ watch(gameState, (newArea, oldArea) => {
 .maplibre-map {
     height: 95vh;
     width: 100vw;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.7);
+    z-index: 10;
 }
 </style>
