@@ -2,7 +2,6 @@ FROM python:3.12-bookworm
 ENV UV_VERSION=0.8.9
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git-lfs \
     # Required for pyproj
     libproj-dev \
     proj-bin \
@@ -11,7 +10,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgeos-dev \
     # Required for building C extensions
     g++ \
-    && git lfs install \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install "uv==$UV_VERSION"
