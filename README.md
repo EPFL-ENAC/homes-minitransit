@@ -38,6 +38,8 @@ make install
 - `libgdal-dev`
 - `libgeos-dev`
 
+**NOTE 2:** The package written by the students (used by the backend to perform the simulations, see [https://github.com/EPFL-HOMES/mini-transit](https://github.com/EPFL-HOMES/mini-transit)) depends on a rather old version of pandas that doesn't support python 3.13. This project should use 3.12.
+
 Then, edit the `.env` file in the root directory of the repository with the following content (most fields must be left empty for local deployment):
 
 ```env
