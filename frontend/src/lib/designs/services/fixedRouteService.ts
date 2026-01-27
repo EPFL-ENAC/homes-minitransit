@@ -1,0 +1,109 @@
+import type { FixedRouteServiceJSON } from "../types";
+import type { Map as MaplibreMap } from 'maplibre-gl';
+import { BaseDesignService, type DesignVisualState } from "./base";
+import type { HexagonMesh } from "../hexagons/hexagonMesh";
+
+export class FixedRouteService extends BaseDesignService<FixedRouteServiceJSON> {
+    static fromJSON(json: FixedRouteServiceJSON): FixedRouteService {
+        return new FixedRouteService(json.name, json);
+    }
+
+    get geojsonSourceId(): string {
+        return `fixed_route_service_${this.name}_source`;
+    }
+
+    get lineLayerId(): string {
+        return `fixed_route_service_${this.name}_line_layer`;
+    }
+
+    get stopsLayerId(): string {
+        return `fixed_route_service_${this.name}_stops_layer`;
+    }
+
+    get layerIds(): string[] {
+        return [this.lineLayerId, this.stopsLayerId];
+    }
+
+    get fixedRouteService(): FixedRouteServiceJSON {
+        return this.serviceData;
+    }
+
+    override drawOnMap(m: MaplibreMap, hexagons: HexagonMesh, color: string = "#FF0000") {
+        super.drawOnMap(m, hexagons, color);
+
+        const coordsFromHexagons = hexagons.getCoordinatesOfIds(this.fixedRouteService.stops);
+
+        const lineString: GeoJSON.Feature<GeoJSON.LineString> = {
+            type: "Feature",
+            properties: {
+                service_name: this.name,
+                promoteId: "service_name",
+            },
+            geometry: {
+                type: "LineString",
+                coordinates: coordsFromHexagons,
+            },
+        };
+
+        const routeGeoJson: GeoJSON.FeatureCollection = {
+            type: "FeatureCollection",
+            features: [lineString],
+        };
+
+        m.addSource(this.geojsonSourceId, {
+            type: "geojson",
+            data: routeGeoJson,
+        });
+
+        m.addLayer({
+            id: this.lineLayerId,
+            type: "line",
+            source: this.geojsonSourceId,
+            paint: {
+                "line-color": color,
+                "line-width": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    5, 1,
+                    10, 3,
+                    14, 8,
+                    18, 16
+                ],
+                "line-dasharray": [1.5, 1],
+            },
+        });
+
+        m.addLayer({
+            id: this.stopsLayerId,
+            type: "circle",
+            source: this.geojsonSourceId,
+            paint: {
+                "circle-radius": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    5, 1,
+                    10, 2,
+                    14, 10,
+                    18, 48
+                ],
+                "circle-color": color,
+            }
+        });
+    }
+
+    override setVisualState(state: DesignVisualState) {
+        super.setVisualState(state);
+        
+        if (!this.map) return;
+        
+        const opacity = state === "normal" ? 0.6 : 1;
+        
+        this.map.setPaintProperty(this.lineLayerId, "line-opacity", opacity);
+        this.map.setPaintProperty(this.stopsLayerId, "circle-opacity", opacity);
+        
+        const dasharray = state === "selected" ? [1, 0] : [1.5, 1];
+        this.map.setPaintProperty(this.lineLayerId, "line-dasharray", dasharray);
+    }
+}

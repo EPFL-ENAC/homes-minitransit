@@ -6,6 +6,10 @@ import { useSimulationsStore } from 'src/stores/simulation';
 import { AsyncResult } from 'unwrapped/core';
 import { useReactiveChain, useReactiveGenerator } from 'unwrapped/vue';
 import { computed, ref } from 'vue';
+import ServiceInspector from 'src/components/ServiceInspector.vue';
+import SimulationInspector from 'src/components/SimulationInspector.vue';
+import RoutesInspector from 'src/components/RoutesInspector.vue';
+import type { DesignService } from 'src/lib/designs/services';
 
 const designsStore = useDesignsStore();
 const simulationsStore = useSimulationsStore();
@@ -13,20 +17,21 @@ const gameAreasStore = useGameAreasStore();
 
 const { params: pageParams, updateParams } = useQueryParamsDescription(demandPageQueryParamsDescription);
 
-const transitLinesOptions = computed(() => {
-    return designsStore.selectedDesign?.fixedRouteServices.map(line => ({
-        label: line.name,
-        value: line.name
+const serviceOptions = computed(() => {
+    return designsStore.selectedDesign?.services.map(service => ({
+        label: service.name,
+        value: service.name
     })) || [];
 });
 
-const currentTransitLine = computed(() => {
+const currentService = computed<DesignService | null>(() => {
     if (!designsStore.selectedDesign || !pageParams.value.pickedServiceName) {
         return null;
     }
-    return designsStore.selectedDesign.fixedRouteServices.find(line => line.name === pageParams.value.pickedServiceName) || null;
+    const found = designsStore.selectedDesign.services.find(line => line.name === pageParams.value.pickedServiceName);
+    return (found || null) as DesignService | null;
 });
-const transitLinePanelOpen = ref(false);
+const servicePanelOpen = ref(false);
 
 const currentSimulation = useReactiveChain(() => pageParams.value.simulationId, (id) => {
     if (!id) {
@@ -54,6 +59,47 @@ const currentHex = useReactiveGenerator(() => pageParams.value.pickedHexId, func
 });
 const hexPanelOpen = ref(false);
 
+const currentRoutes = useReactiveGenerator(() => pageParams.value.pickedHexId, function* (hexId) {
+    if (!hexId || !pageParams.value.simulationId) {
+        return null;
+    }
+
+    const routes = yield* simulationsStore.getSimulationRoute(
+        pageParams.value.mode === "origin" ? {
+            simulationParams: {
+                simulationId: pageParams.value.simulationId,
+            },
+            type: "out",
+            startHexId: hexId,
+        } : {
+            simulationParams: {
+                simulationId: pageParams.value.simulationId,
+            },
+            type: "in",
+            endHexId: hexId,
+        }
+    );
+
+    return routes;
+});
+const routesPanelOpen = ref(false);
+
+
+function downloadResults() {
+    const simulation = currentSimulation.value.unwrapOrNull();
+    if (!simulation) {
+        return;
+    }
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(simulation, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `simulation_results_${pageParams.value.simulationId}.json`);
+    document.body.appendChild(downloadAnchorNode); // required for firefox
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+}
+
 </script>
 
 <template>
@@ -73,53 +119,9 @@ const hexPanelOpen = ref(false);
                     clearable
                     map-options
                 />
+                <q-btn class="q-mt-md" color="primary" label="Download simulation results" @click="downloadResults" />
                 <q-markup-table flat class="q-mt-md">
-                    <tbody>
-                        <tr>
-                            <td>Simulation duration</td>
-                            <td class="text-right">{{ currentSimulation.unwrapOrNull()?.simulation_time }}</td>
-                        </tr>
-                        <tr>
-                            <td>Simulation hour</td>
-                            <td class="text-right">{{ currentSimulation.unwrapOrNull()?.simulation_hour }}</td>
-                        </tr>
-                        <tr>
-                            <td>Demands processed</td>
-                            <td class="text-right">{{ currentSimulation.unwrapOrNull()?.demands_processed }}</td>
-                        </tr>
-                        <tr>
-                            <td>Sampling enabled</td>
-                            <td class="text-right">{{ currentSimulation.unwrapOrNull()?.sampling_enabled ? 'Yes' : 'No' }}</td>
-                        </tr>
-                        <tr>
-                            <td>Network routes taken</td>
-                            <td class="text-right">{{ currentSimulation.unwrapOrNull()?.network_routes_taken }}</td>
-                        </tr>
-                        <tr>
-                            <td>Routes generated</td>
-                            <td class="text-right">{{ currentSimulation.unwrapOrNull()?.routes_generated }}</td>
-                        </tr>
-                        <tr>
-                            <td>Input demands</td>
-                            <td class="text-right">{{ currentSimulation.unwrapOrNull()?.input_demands_count }}</td>
-                        </tr>
-                        <tr>
-                            <td>Total units</td>
-                            <td class="text-right">{{ currentSimulation.unwrapOrNull()?.total_units }}</td>
-                        </tr>
-                        <tr>
-                            <td>Total time (min)</td>
-                            <td class="text-right">{{ currentSimulation.unwrapOrNull()?.total_time_minutes }}</td>
-                        </tr>
-                        <tr>
-                            <td>Total fare</td>
-                            <td class="text-right">{{ currentSimulation.unwrapOrNull()?.total_fare }}</td>
-                        </tr>
-                        <tr>
-                            <td>Average fare</td>
-                            <td class="text-right">{{ currentSimulation.unwrapOrNull()?.average_fare }}</td>
-                        </tr>
-                    </tbody>
+                    <simulation-inspector :simulation="currentSimulation.unwrapOrNull()!" />
                 </q-markup-table>
             </div>
         </q-expansion-item>
@@ -135,7 +137,7 @@ const hexPanelOpen = ref(false);
                     clearable
                     map-options
                 />-->
-                <div class="q-mt-md">Properties</div>
+                <div class="q-mt-md heading">Properties</div>
                 <q-markup-table flat>
                     <tbody>
                         <tr>
@@ -145,7 +147,7 @@ const hexPanelOpen = ref(false);
                     </tbody>
                 </q-markup-table>
 
-                <div class="q-mt-md">Origin demand</div>
+                <div class="q-mt-md heading">Origin demand</div>
                 <q-markup-table flat>
                     <tbody>
                         <tr v-for="h in [...Array(24).keys()]" :key="h">
@@ -155,8 +157,8 @@ const hexPanelOpen = ref(false);
                     </tbody>
                 </q-markup-table>
 
-                <div>Destination demand</div>
-                <q-markup-table flat class="q-mt-md">
+                <div class="q-mt-md heading">Destination demand</div>
+                <q-markup-table flat>
                     <tbody>
                         <tr v-for="h in [...Array(24).keys()]" :key="h">
                             <td>{{ h }}</td>
@@ -165,7 +167,7 @@ const hexPanelOpen = ref(false);
                     </tbody>
                 </q-markup-table>
 
-                <div class="q-mt-md">Total demand</div>
+                <div class="q-mt-md heading">Total demand</div>
                 <q-markup-table flat>
                     <tbody>
                         <tr v-for="h in [...Array(24).keys()]" :key="h">
@@ -177,41 +179,35 @@ const hexPanelOpen = ref(false);
             </div>
         </q-expansion-item>
 
-        <q-expansion-item v-if="transitLinesOptions.length > 0" label="Transit Lines" header-class="text-h6" v-model="transitLinePanelOpen">
+        <q-expansion-item v-if="serviceOptions.length > 0" label="Services" header-class="text-h6" v-model="servicePanelOpen">
             <div class="q-px-md q-pb-md">
                 <q-select
                     :model-value="pageParams.pickedServiceName"
                     @update:model-value="(newValue) => updateParams({ pickedServiceName: newValue })"
                     emit-value
-                    :options="transitLinesOptions"
-                    label="Selected transit line"
+                    :options="serviceOptions"
+                    label="Selected service"
                     clearable
                 />
-                <q-markup-table v-if="currentTransitLine" flat class="q-mt-md">
-                    <tbody>
-                        <tr>
-                            <td>Capacity</td>
-                            <td class="text-right">{{ currentTransitLine.capacity }}</td>
-                        </tr>
-                        <tr>
-                            <td>Number of stops</td>
-                            <td class="text-right">{{ currentTransitLine.stops.length }}</td>
-                        </tr>
-                        <tr>
-                            <td>Frequency</td>
-                            <td class="text-right">{{ currentTransitLine.frequency }}</td>
-                        </tr>
-                        <tr>
-                            <td>Stopping time</td>
-                            <td class="text-right">{{ currentTransitLine.stopping_time }}</td>
-                        </tr>
-                        <tr>
-                            <td>Travel time</td>
-                            <td class="text-right">{{ currentTransitLine.travel_time }}</td>
-                        </tr>
-                    </tbody>
+                <q-markup-table v-if="currentService" flat class="q-mt-md">
+                    <service-inspector :service="currentService" />
                 </q-markup-table>
+            </div>
+        </q-expansion-item>
+
+        <q-expansion-item v-if="currentRoutes.unwrapOrNull()" label="Routes" header-class="text-h6" v-model="routesPanelOpen">
+            <div class="q-px-md q-pb-md">
+                <routes-inspector :routes="currentRoutes.unwrapOrNull()!" :hex-id="pageParams.pickedHexId!" :mode="pageParams.mode" />
             </div>
         </q-expansion-item>
     </q-scroll-area>
 </template>
+
+<style scoped>
+
+    .heading {
+        font-weight: 500;
+        font-size: 1.1em;
+    }
+
+</style>

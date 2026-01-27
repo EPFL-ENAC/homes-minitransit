@@ -2,8 +2,8 @@ import type { Geometry } from "geojson";
 import { defineStore } from "pinia";
 import proj4 from "proj4";
 import { KeyedAsyncCache, Result } from "unwrapped/core";
-import type { TransitSystemDesign } from "./designs";
 import { fetchJSON } from "./utils";
+import type { TransitSystemDesign } from "src/lib/designs/transitSystemDesign";
 
 export type GameAreaMode = "origin" | "destination";
 
@@ -17,7 +17,7 @@ export interface GameState {
     pickedServiceName: string | null;
 }
 
-type HexagonGeoJSON = GeoJSON.FeatureCollection<Geometry & { coordinates: [number, number][][] }>;
+export type HexagonGeoJSON = GeoJSON.FeatureCollection<Geometry & { coordinates: [number, number][][] }>;
 
 interface GameAreaGeometryParams {
     areaId: string;

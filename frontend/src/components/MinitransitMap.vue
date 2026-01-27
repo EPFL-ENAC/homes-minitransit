@@ -5,15 +5,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 // import MaplibreGeocoder from '@maplibre/maplibre-gl-geocoder';
 // import { ThemeSwitcherControl, ThemeDefinition } from 'maplibregl-theme-switcher';
 import {
-    // AttributionControl,
-    // FullscreenControl,
-    // GeolocateControl,
-    // LngLat,
     Map,
-    // MapMouseEvent,
-    // Marker,
-    // NavigationControl,
-    // ScaleControl,
     type LngLatLike,
     type StyleSpecification
 } from 'maplibre-gl';
@@ -21,19 +13,14 @@ import { onMounted, useTemplateRef, watch } from 'vue';
 import { useLazyAction, useAsyncResultCollection } from 'unwrapped/vue';
 import { AsyncResult, Result } from 'unwrapped/core';
 import { useGameAreasStore, type GameState } from 'src/stores/gameAreasStore';
-import { addOrUpdateGeoJsonSourceToMap, drawDesignToMap, drawRoutesOnMap, getCenterPointOfGeoJSON, setupHexagonInteractivity } from './mapUtils';
 import { type SimulationRoute, useSimulationsStore } from 'src/stores/simulation';
+import { HexagonMesh } from 'src/lib/designs/hexagons/hexagonMesh';
+import { RoutesMesh } from 'src/lib/designs/routes/routes';
 
 interface Props {
     style?: string | StyleSpecification | undefined;
     center?: LngLatLike;
     zoom?: number;
-    /* minZoom?: number
-    maxZoom?: number
-    themes?: ThemeDefinition[]
-    position?: boolean | string | undefined
-    geocoder?: boolean | string | undefined
-    attribution?: string */
 }
 const props = defineProps<Props>();
 
@@ -56,6 +43,7 @@ const { resultRef: map, trigger: loadMap } = useLazyAction<Map>(() => {
         });
 
         void m.once('load', () => {
+            postLoad(m);
             resolve(Result.ok(m));
         });
     });
@@ -75,8 +63,16 @@ watch(gameState, (newState, oldState) => {
     updateState(newState, oldState);
 });
 
-let eventCleanup: (() => void) | null = null;
-let designCleanup: (() => void) | null = null;
+const hexagons = new HexagonMesh();
+const routes = new RoutesMesh();
+
+function postLoad(m: Map) {
+    hexagons.drawOnMap(m);
+    hexagons.onClicked((hexId, properties) => {
+        emit("hexagonClicked", hexId, properties);
+    });
+    routes.drawOnMap(m);
+}
 
 function updateState(newState: GameState | undefined, oldState: GameState | undefined) {
     if (!newState) return;
@@ -85,61 +81,48 @@ function updateState(newState: GameState | undefined, oldState: GameState | unde
         const m = yield* map.value;
 
         const demandKey = `${newState.mode === 'origin' ? 'Out' : 'In'}_${newState.hour}`;
+
         if (newState.areaId !== oldState?.areaId) {
             const geometry = yield* gameAreaStore.getGameAreaGeometry({
                 areaId: newState.areaId,
                 reprojectToWGS84: true
             });
+            hexagons.setGeoJSON(geometry);
 
-            addOrUpdateGeoJsonSourceToMap(m, geometry, "data");
-
-            const center = getCenterPointOfGeoJSON(geometry);
-            m.flyTo({
-                duration: 1000,
-                center,
-                zoom: 11.5
-            });
+            const center = hexagons.getCenterPoint();
+            if (center) {
+                m.flyTo({
+                    duration: 1000,
+                    center,
+                    zoom: 11.5
+                });
+            }
         }
 
-        eventCleanup?.();
-        eventCleanup = setupHexagonInteractivity(m, "data", demandKey, (hexId, properties) => {
-            emit("hexagonClicked", hexId, properties);
-        });
-        m.setPaintProperty("data-fill", "fill-color", [
-            "interpolate",
-            ["linear"],
-            ["get", demandKey],
-            0, "rgb(187, 187, 187)",
-            1, "rgb(0, 0, 255)",
-            200, "rgb(255, 0, 0)"
-        ]);
-        m.setPaintProperty("data-fill", "fill-opacity", [
-            "case",
-            ["boolean", ["feature-state", "hover"], false],
-            1.0,
-            0.6
-        ]);
+        hexagons.setDemandKey(demandKey);
 
-        designCleanup?.();
         if (newState.design) {
-            designCleanup = drawDesignToMap(m, newState.design, "data", (service) => {
-                emit("serviceClicked", service.name);
-            }, newState.pickedServiceName ?? undefined);
+            if (newState.design !== oldState?.design) {
+                newState.design.drawOnMap(m, hexagons, (service) => {
+                    emit("serviceClicked", service.name);
+                });
+            }
+            newState.design.selectService(newState.pickedServiceName || null);
         } else if (oldState?.design) {
-            designCleanup = null;
+            oldState.design.removeFromMap();
         }
 
-        const simulationId = newState.simulationId ?? "test";
+        const simulationId = newState.simulationId;
         if (!simulationId) return;
 
         yield* simulationsStore.getSimulationResult({
             simulationId: simulationId,
         });
 
-        let routes: SimulationRoute[] = [];
+        let simulatedRoutes: SimulationRoute[] = [];
 
         if (newState.pickedHexId) {
-            routes = yield* simulationsStore.getSimulationRoute(
+            simulatedRoutes = yield* simulationsStore.getSimulationRoute(
                 newState.mode === "origin" ? {
                     simulationParams: {
                         simulationId: simulationId,
@@ -156,9 +139,7 @@ function updateState(newState: GameState | undefined, oldState: GameState | unde
             );
         }
 
-        drawRoutesOnMap(m, routes, "data", "simulation-routes");
-
-        console.log("Routes for picked hexagon:", routes);
+        routes.setRoutes(simulatedRoutes, hexagons);
     }));
 }
 

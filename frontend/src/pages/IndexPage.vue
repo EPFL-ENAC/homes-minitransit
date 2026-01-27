@@ -7,6 +7,7 @@
 <script setup lang="ts">
 import type { GameAreaId } from 'app/utils/areasUtils';
 import MinitransitMap from 'components/MinitransitMap.vue';
+import type { TransitSystemDesign } from 'src/lib/designs/transitSystemDesign';
 import { demandPageQueryParamsDescription, useQueryParamsDescription } from 'src/router/routingUtils';
 import { useDesignsStore } from 'src/stores/designs';
 import type { GameState } from 'src/stores/gameAreasStore';
@@ -20,7 +21,7 @@ const params = computed<GameState>(() => {
   return {
     ...urlParams.value,
     areaId: urlParams.value.areaId as GameAreaId,
-    design: designs.selectedDesign,
+    design: designs.selectedDesign as TransitSystemDesign | null, // Shitty typescript type inference
     pickedServiceName: urlParams.value.pickedServiceName || null,
   }
 });

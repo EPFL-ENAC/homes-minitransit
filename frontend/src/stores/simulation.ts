@@ -1,8 +1,8 @@
 import { defineStore } from "pinia";
 import { AsyncResult, delay, KeyedAsyncCache } from "unwrapped/core";
 import { fetchJSON } from "./utils";
-import type { FixedRouteService } from "./designs";
 import { computed, ref } from "vue";
+import type { FixedRouteServiceJSON } from "src/lib/designs/types";
 
 export type SimulationResultRetrieval = {
     status: "finished";
@@ -71,7 +71,7 @@ export type PostRunSimulationBody = {
         hour: number;
     };
     fixed_route_services?: {
-        services: FixedRouteService[];
+        services: FixedRouteServiceJSON[];
     } | undefined;
 };
 
