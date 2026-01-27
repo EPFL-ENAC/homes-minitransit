@@ -1,41 +1,38 @@
 <script setup lang="ts">
 import { type GameAreaId, gameAreas } from 'app/utils/areasUtils';
+import { demandPageQueryParamsDescription, useQueryParamsDescription } from 'src/router/routingUtils';
 import { useDesignsStore } from 'src/stores/designs';
 import { computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useSimulationsStore } from 'src/stores/simulation';
+import { AsyncResult } from 'unwrapped/core';
+import { useLazyGenerator } from 'unwrapped/vue';
 
-const route = useRoute();
-const router = useRouter();
 const designsStore = useDesignsStore();
+const simulationsStore = useSimulationsStore();
 
-const currentAreaId = computed(() => route.query.area as GameAreaId | undefined);
-const currentHour = computed(() => parseInt((route.query.hour ?? "0") as string));
-const currentMode = computed(() => (route.query.mode ?? "origin") as "origin" | "destination");
-
+const { params: pageParams, updateParams } = useQueryParamsDescription(demandPageQueryParamsDescription);
 const gameAreasList = computed(() => Object.values(gameAreas));
-
-interface DemandPageUrlParams {
-    area?: GameAreaId | undefined;
-    hour: number;
-    mode: "origin" | "destination";
-}
-
-function makeDemandPageUrl(params: DemandPageUrlParams) {
-    return `/?area=${params.area ?? ''}&hour=${params.hour}&mode=${params.mode}`;
-}
-
-function goToUpdatedParams(p: Partial<DemandPageUrlParams>) {
-    return router.push(makeDemandPageUrl({
-        area: p.area ?? currentAreaId.value,
-        hour: p.hour ?? currentHour.value,
-        mode: p.mode ?? currentMode.value
-    }));
-}
 
 function areaChanged(newId: GameAreaId) {
     designsStore.file = null;
-    void goToUpdatedParams({ area: newId });
+    return updateParams({ areaId: newId });
 }
+
+const { resultRef: simulationId, trigger: runSimulation } = useLazyGenerator(function* () {
+    if (!pageParams.value.areaId) {
+        return;
+    }
+
+    const simulationId = yield* AsyncResult.fromValuePromise(simulationsStore.runSimulation({
+        area_id: pageParams.value.areaId,
+        input_params: {
+            hour: pageParams.value.hour,
+        },
+        fixed_route_services: designsStore.selectedDesign ? { services: designsStore.selectedDesign.fixedRouteServices.map(service => service.toJSON()) } : undefined
+    }));
+
+    void updateParams({ simulationId: simulationId.run_id });
+});
 
 </script>
 
@@ -45,12 +42,7 @@ function areaChanged(newId: GameAreaId) {
             <div class="text-h6 q-mb-md">Area</div>
             <q-list>
                 <template v-for="area in gameAreasList" :key="area.id">
-                    <q-item
-                        clickable
-                        :active="area.id === currentAreaId"
-                        v-ripple
-                        @click="areaChanged(area.id)"
-                    >
+                    <q-item clickable :active="area.id === pageParams.areaId" v-ripple @click="areaChanged(area.id)">
                         <q-item-section avatar>
                             <q-icon name="send" />
                         </q-item-section>
@@ -66,45 +58,50 @@ function areaChanged(newId: GameAreaId) {
             <div class="text-h6 q-mb-md">Demand</div>
             <div class="q-gutter-sm q-mb-md">
                 <q-radio
-                    :model-value="currentMode"
-                    @update:model-value="(e) => goToUpdatedParams({ mode: e })"
+                    :model-value="pageParams.mode"
+                    @update:model-value="(e) => updateParams({ mode: e })"
                     dense
                     val="origin"
                     label="Origin"
-                    :disable="!currentAreaId"
+                    :disable="!pageParams.areaId"
                 />
                 <q-radio
-                    :model-value="currentMode"
-                    @update:model-value="(e) => goToUpdatedParams({ mode: e })"
+                    :model-value="pageParams.mode"
+                    @update:model-value="(e) => updateParams({ mode: e })"
                     dense
                     val="destination"
                     label="Destination"
-                    :disable="!currentAreaId"
+                    :disable="!pageParams.areaId"
                 />
             </div>
             <div>
                 <div class="text-subtitle1">Hour of the day</div>
                 <q-slider
-                    :model-value="currentHour"
-                    @update:model-value="(e) => goToUpdatedParams({ hour: e ?? 0 })"
+                    :model-value="pageParams.hour"
+                    @update:model-value="(e) => updateParams({ hour: e ?? 0 })"
                     :min="0"
                     :max="23"
                     label
                     :markers="4"
                     marker-labels
-                    :disable="!currentAreaId"
+                    :disable="!pageParams.areaId"
                 />
             </div>
         </div>
 
         <div class="q-pa-md">
             <div class="text-h6 q-mb-md">Transit system design</div>
-            <q-file
-                v-model="designsStore.file"
-                label="Add a design"
-                filled
-                clearable
-                :disable="!currentAreaId"
+            <q-file v-model="designsStore.file" label="Add a design" filled clearable :disable="!pageParams.areaId" />
+        </div>
+
+        <div class="q-pa-md">
+            <div class="text-h6 q-mb-md">Simulation</div>
+            <q-btn
+                label="Run simulation"
+                color="primary" 
+                @click="runSimulation" 
+                :loading="simulationId.isLoading()" 
+                :disable="!pageParams.areaId || !designsStore.file || simulationId.isLoading()"
             />
         </div>
     </q-scroll-area>

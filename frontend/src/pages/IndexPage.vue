@@ -1,25 +1,36 @@
 <template>
   <q-page class="row items-center justify-evenly">
-    <minitransit-map ref="map" v-model:game-state="params" />
+    <minitransit-map ref="map" v-model:game-state="params" @hexagon-clicked="navigateToHexagon" @service-clicked="navigateToService" />
   </q-page>
 </template>
 
 <script setup lang="ts">
 import type { GameAreaId } from 'app/utils/areasUtils';
 import MinitransitMap from 'components/MinitransitMap.vue';
+import type { TransitSystemDesign } from 'src/lib/designs/transitSystemDesign';
+import { demandPageQueryParamsDescription, useQueryParamsDescription } from 'src/router/routingUtils';
 import { useDesignsStore } from 'src/stores/designs';
+import type { GameState } from 'src/stores/gameAreasStore';
 import { computed } from 'vue';
-import { useRoute } from 'vue-router';
 
-const route = useRoute();
 const designs = useDesignsStore();
 
-const params = computed(() => {
+const { params: urlParams, updateParams } = useQueryParamsDescription(demandPageQueryParamsDescription);
+
+const params = computed<GameState>(() => {
   return {
-    areaId: route.query.area as GameAreaId,
-    hour: parseInt((route.query.hour ?? "0") as string),
-    mode: (route.query.mode ?? "origin") as "origin" | "destination",
-    design: designs.selectedDesign
+    ...urlParams.value,
+    areaId: urlParams.value.areaId as GameAreaId,
+    design: designs.selectedDesign as TransitSystemDesign | null, // Shitty typescript type inference
+    pickedServiceName: urlParams.value.pickedServiceName || null,
   }
 });
+
+function navigateToHexagon(hexId: number/* , properties: Record<string, any> */) {
+  return updateParams({ pickedHexId: hexId });
+}
+
+function navigateToService(serviceName: string) {
+  return updateParams({ pickedServiceName: serviceName });
+}
 </script>

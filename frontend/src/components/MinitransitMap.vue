@@ -5,15 +5,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 // import MaplibreGeocoder from '@maplibre/maplibre-gl-geocoder';
 // import { ThemeSwitcherControl, ThemeDefinition } from 'maplibregl-theme-switcher';
 import {
-    // AttributionControl,
-    // FullscreenControl,
-    // GeolocateControl,
-    // LngLat,
     Map,
-    // MapMouseEvent,
-    // Marker,
-    // NavigationControl,
-    // ScaleControl,
     type LngLatLike,
     type StyleSpecification
 } from 'maplibre-gl';
@@ -21,23 +13,25 @@ import { onMounted, useTemplateRef, watch } from 'vue';
 import { useLazyAction, useAsyncResultCollection } from 'unwrapped/vue';
 import { AsyncResult, Result } from 'unwrapped/core';
 import { useGameAreasStore, type GameState } from 'src/stores/gameAreasStore';
-import { addOrUpdateGeoJsonSourceToMap, cleanUpDesign, drawDesignToMap, getCenterPointOfGeoJSON } from './mapUtils';
+import { type SimulationRoute, useSimulationsStore } from 'src/stores/simulation';
+import { HexagonMesh } from 'src/lib/designs/hexagons/hexagonMesh';
+import { RoutesMesh } from 'src/lib/designs/routes/routes';
 
 interface Props {
-    style?: string | StyleSpecification | undefined
+    style?: string | StyleSpecification | undefined;
     center?: LngLatLike;
-    zoom?: number
-    /* minZoom?: number
-    maxZoom?: number
-    themes?: ThemeDefinition[]
-    position?: boolean | string | undefined
-    geocoder?: boolean | string | undefined
-    attribution?: string */
+    zoom?: number;
 }
 const props = defineProps<Props>();
 
 const gameState = defineModel<GameState>("gameState");
 const gameAreaStore = useGameAreasStore();
+const simulationsStore = useSimulationsStore();
+
+const emit = defineEmits<{
+    (e: "hexagonClicked", hexId: number, properties: Record<string, unknown>): void;
+    (e: "serviceClicked", serviceName: string): void;
+}>();
 
 const { resultRef: map, trigger: loadMap } = useLazyAction<Map>(() => {
     return new Promise<Result<Map>>((resolve) => {
@@ -49,7 +43,7 @@ const { resultRef: map, trigger: loadMap } = useLazyAction<Map>(() => {
         });
 
         void m.once('load', () => {
-            setTimeout(() => { resolve(Result.ok(m)); }, 3000);
+            postLoad(m);
             resolve(Result.ok(m));
         });
     });
@@ -62,53 +56,105 @@ const container = useTemplateRef<HTMLDivElement>('container');
 onMounted(() => {
     loadMap();
     tasks.value.add("map", map.value, false);
+    updateState(gameState.value, undefined);
 });
 
-watch(gameState, (newArea, oldArea) => {
-    if (!newArea) return;
+watch(gameState, (newState, oldState) => {
+    updateState(newState, oldState);
+});
 
-    return tasks.value.add(`area-${crypto.randomUUID()}`, AsyncResult.run(function *() {
+const hexagons = new HexagonMesh();
+const routes = new RoutesMesh();
+
+function postLoad(m: Map) {
+    hexagons.drawOnMap(m);
+    hexagons.onClicked((hexId, properties) => {
+        emit("hexagonClicked", hexId, properties);
+    });
+    routes.drawOnMap(m);
+}
+
+function updateState(newState: GameState | undefined, oldState: GameState | undefined) {
+    if (!newState) return;
+
+    return tasks.value.add(`area-${crypto.randomUUID()}`, AsyncResult.run(function* () {
+        if (!newState.areaId) {
+            return;
+        }
+        
         const m = yield* map.value;
 
-        const demandKey = `${newArea.mode === 'origin' ? 'Out' : 'In'}_${newArea.hour}`;
-        if (newArea.areaId !== oldArea?.areaId) {
+        const demandKey = `${newState.mode === 'origin' ? 'Out' : 'In'}_${newState.hour}`;
+
+        if (newState.areaId !== oldState?.areaId) {
             const geometry = yield* gameAreaStore.getGameAreaGeometry({
-                areaId: newArea.areaId,
+                areaId: newState.areaId,
                 reprojectToWGS84: true
             });
+            hexagons.setGeoJSON(geometry);
 
-            addOrUpdateGeoJsonSourceToMap(m, geometry, "data");
-
-            const center = getCenterPointOfGeoJSON(geometry);
-            m.flyTo({
-                duration: 1000,
-                center,
-                zoom: 11.5
-            });
+            const center = hexagons.getCenterPoint();
+            if (center) {
+                m.flyTo({
+                    duration: 1000,
+                    center,
+                    zoom: 11.5
+                });
+            }
         }
 
-        m.setPaintProperty("data-fill", "fill-color", [
-            'interpolate',
-            ['linear'],
-            ['get', demandKey],
-            0, '#bbbbbb88',
-            50, '#eeee00ff',
-            100, '#ff0000ff'
-        ]);
+        hexagons.setDemandKey(demandKey);
 
-        if (newArea.design) {
-            drawDesignToMap(m, newArea.design, "data");
-        } else if (oldArea?.design) {
-            cleanUpDesign(m, oldArea.design);
+        if (newState.design) {
+            if (newState.design !== oldState?.design) {
+                newState.design.drawOnMap(m, hexagons, (service) => {
+                    emit("serviceClicked", service.name);
+                });
+            }
+            newState.design.selectService(newState.pickedServiceName || null);
+        } else if (oldState?.design) {
+            oldState.design.removeFromMap();
         }
+
+        const simulationId = newState.simulationId;
+        if (!simulationId) {
+            routes.setRoutes([], hexagons);
+            return;
+        }
+
+        yield* simulationsStore.getSimulationResult({
+            simulationId: simulationId,
+        });
+
+        let simulatedRoutes: SimulationRoute[] = [];
+
+        if (newState.pickedHexId) {
+            simulatedRoutes = yield* simulationsStore.getSimulationRoute(
+                newState.mode === "origin" ? {
+                    simulationParams: {
+                        simulationId: simulationId,
+                    },
+                    type: "out",
+                    startHexId: newState.pickedHexId
+                } : {
+                    simulationParams: {
+                        simulationId: simulationId,
+                    },
+                    type: "in",
+                    endHexId: newState.pickedHexId
+                }
+            );
+        }
+
+        routes.setRoutes(simulatedRoutes, hexagons);
     }));
-});
+}
 
 </script>
 
 <template>
     <div ref="container" class="maplibre-map"></div>
-    <div v-if="tasks.anyLoading()" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-80">
+    <div v-if="tasks.anyLoading()" class="loading-overlay">
         <q-spinner-dots color="primary" size="100px" />
     </div>
 </template>
@@ -117,5 +163,18 @@ watch(gameState, (newArea, oldArea) => {
 .maplibre-map {
     height: 95vh;
     width: 100vw;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.7);
+    z-index: 10;
 }
 </style>
