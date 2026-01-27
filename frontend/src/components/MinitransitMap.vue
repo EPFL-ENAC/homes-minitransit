@@ -78,6 +78,10 @@ function updateState(newState: GameState | undefined, oldState: GameState | unde
     if (!newState) return;
 
     return tasks.value.add(`area-${crypto.randomUUID()}`, AsyncResult.run(function* () {
+        if (!newState.areaId) {
+            return;
+        }
+        
         const m = yield* map.value;
 
         const demandKey = `${newState.mode === 'origin' ? 'Out' : 'In'}_${newState.hour}`;
@@ -113,7 +117,10 @@ function updateState(newState: GameState | undefined, oldState: GameState | unde
         }
 
         const simulationId = newState.simulationId;
-        if (!simulationId) return;
+        if (!simulationId) {
+            routes.setRoutes([], hexagons);
+            return;
+        }
 
         yield* simulationsStore.getSimulationResult({
             simulationId: simulationId,

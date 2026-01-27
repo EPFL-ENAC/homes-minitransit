@@ -20,9 +20,6 @@ from minitransit_simulation import (
     SimulationRunnerResult,
 )
 
-# Add parent directory to path to import other modules
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 
 @dataclass
 class SimulationInput:
@@ -95,9 +92,16 @@ class SimulationManager:
         self.futures[id] = future
 
         def _on_done(fut):
-            run.result = fut.result()
-            run.save_to_json(self._make_output_filepath(run.id))
-            self.futures.pop(run.id)
+            try:
+                run.result = fut.result()
+            except Exception as e:
+                run.result = SimulationRunnerResult(
+                    status="error", message=str(e), routes=[]
+                )
+                print(f"Error in simulation run {run.id}: {e}", file=sys.stderr)
+            finally:
+                run.save_to_json(self._make_output_filepath(run.id))
+                self.futures.pop(run.id)
 
         future.add_done_callback(_on_done)
 

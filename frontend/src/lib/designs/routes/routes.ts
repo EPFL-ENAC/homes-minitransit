@@ -139,6 +139,9 @@ export class RoutesMesh {
         if (this.map.getLayer(this.lineLayerId)) {
             this.map.removeLayer(this.lineLayerId);
         }
+        if (this.map.getLayer(this.arrowLayerId)) {
+            this.map.removeLayer(this.arrowLayerId);
+        }
         if (this.map.getSource(this.sourceId)) {
             this.map.removeSource(this.sourceId);
         }

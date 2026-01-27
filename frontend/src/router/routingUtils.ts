@@ -11,10 +11,18 @@ export type DemandPageUrlParams = {
     pickedServiceName?: string | null;
 };
 
+function getHour(hourString: string | undefined): number {
+    const hour = parseInt(hourString ?? "0");
+    if (isNaN(hour) || hour < 0 || hour > 23) {
+        return 0;
+    }
+    return hour;
+}
+
 export function extractDemandPageUrlParams(query: LocationQuery): DemandPageUrlParams {
     return {
         areaId: query.areaId as string | undefined,
-        hour: parseInt((query.hour ?? "0") as string),
+        hour: getHour(query.hour as string | undefined),
         mode: (query.mode ?? "origin") as GameAreaMode,
         simulationId: query.simulationId as string || null,
         pickedHexId: query.pickedHexId ? parseInt(query.pickedHexId as string) : null,

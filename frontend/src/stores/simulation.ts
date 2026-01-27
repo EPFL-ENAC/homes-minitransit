@@ -3,6 +3,7 @@ import { AsyncResult, delay, KeyedAsyncCache } from "unwrapped/core";
 import { fetchJSON } from "./utils";
 import { computed, ref } from "vue";
 import type { FixedRouteServiceJSON } from "src/lib/designs/types";
+import { baseUrl } from "src/boot/api";
 
 export type SimulationResultRetrieval = {
     status: "finished";
@@ -82,7 +83,7 @@ export interface PostRunSimulationResult {
 export function watchForSimulationResult(params: SimulationParams, delayMS: number = 2000) {
     return AsyncResult.run(function* () {
         while (true) {
-            const fetched = yield* AsyncResult.fromValuePromise(fetchJSON<SimulationResultRetrieval>(`http://localhost:8000/simulation/simulate/${params.simulationId}`));
+            const fetched = yield* AsyncResult.fromValuePromise(fetchJSON<SimulationResultRetrieval>(`${baseUrl}/simulation/simulate/${params.simulationId}`));
             const result = fetched.unwrapOrNull();
             if (!result) {
                 return yield* AsyncResult.errTag("fetch_error", "Failed to fetch simulation result");
@@ -151,7 +152,7 @@ export const useSimulationsStore = defineStore("simulations", () => {
     }
 
     async function runSimulation(params: PostRunSimulationBody): Promise<PostRunSimulationResult> {
-        const response = await fetch(`http://localhost:8000/simulation/simulate`, {
+        const response = await fetch(`${baseUrl}/simulation/simulate`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

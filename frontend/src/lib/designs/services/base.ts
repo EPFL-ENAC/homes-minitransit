@@ -93,6 +93,11 @@ export abstract class BaseDesignService<T> {
                 this.map!.removeLayer(id);
             }
         });
-        this.map.removeSource(this.geojsonSourceId);
+
+        if (this.map.getSource(this.geojsonSourceId)) {
+            this.map.removeSource(this.geojsonSourceId);
+        }
+
+        this.map = null;
     }
 }
