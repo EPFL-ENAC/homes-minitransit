@@ -6,14 +6,14 @@ interface GameArea {
 }
 
 export const gameAreas = {
-    "lausanne": {
-        id: "lausanne",
+    "Lausanne": {
+        id: "Lausanne",
         name: "Lausanne",
         description: "The beautiful city of Lausanne, Switzerland.",
         center: [6.6323, 46.5197],
     },
-    "renens": {
-        id: "renens",
+    "Renens": {
+        id: "Renens",
         name: "Renens",
         description: "The vibrant town of Renens, near Lausanne.",
         center: [6.5833, 46.5333],
