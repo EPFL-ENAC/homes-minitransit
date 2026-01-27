@@ -1,4 +1,4 @@
-FROM python:3.13.6-bookworm
+FROM python:3.12-bookworm
 ENV UV_VERSION=0.8.9
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
