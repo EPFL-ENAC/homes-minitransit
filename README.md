@@ -32,6 +32,12 @@ Follow these instructions to run the MMS Database website locally. First, run:
 make install
 ```
 
+**NOTE :** this needs to have the following package installed :
+- `libproj-dev`
+- `proj-bin`
+- `libgdal-dev`
+- `libgeos-dev`
+
 Then, edit the `.env` file in the root directory of the repository with the following content (most fields must be left empty for local deployment):
 
 ```env
