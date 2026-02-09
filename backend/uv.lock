@@ -90,7 +90,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.115.14" },
     { name = "fastapi-cache2", specifier = ">=0.2.2" },
     { name = "jinja2", specifier = ">=3.1.6" },
-    { name = "mini-transit-simulation", git = "https://github.com/EPFL-HOMES/mini-transit.git?rev=main" },
+    { name = "mini-transit-simulation", git = "https://github.com/EPFL-HOMES/mini-transit.git?rev=cl%2Fadd_services_from_XXX-in-SimulationRunner" },
     { name = "networkx", specifier = ">=3.5" },
     { name = "numpy", specifier = ">=1.26.0" },
     { name = "pandas", specifier = ">=2.1.3" },
@@ -356,7 +356,7 @@ wheels = [
 [[package]]
 name = "mini-transit-simulation"
 version = "0.1.0"
-source = { git = "https://github.com/EPFL-HOMES/mini-transit.git?rev=main#3c2ac07e905227a473d241c1682478ee0944876d" }
+source = { git = "https://github.com/EPFL-HOMES/mini-transit.git?rev=cl%2Fadd_services_from_XXX-in-SimulationRunner#6200df7e883c6b59408a0d16c1b1208b9598de60" }
 dependencies = [
     { name = "geopandas" },
     { name = "networkx" },

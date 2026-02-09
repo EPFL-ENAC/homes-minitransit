@@ -118,7 +118,7 @@ function updateState(newState: GameState | undefined, oldState: GameState | unde
 
         const simulationId = newState.simulationId;
         if (!simulationId) {
-            routes.setRoutes([], hexagons);
+            routes.setRoutes([], hexagons, newState.design);
             return;
         }
 
@@ -146,7 +146,7 @@ function updateState(newState: GameState | undefined, oldState: GameState | unde
             );
         }
 
-        routes.setRoutes(simulatedRoutes, hexagons);
+        routes.setRoutes(simulatedRoutes, hexagons, newState.design);
     }));
 }
 

@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { AsyncResult, delay, KeyedAsyncCache } from "unwrapped/core";
 import { fetchJSON } from "./utils";
 import { computed, ref } from "vue";
-import type { FixedRouteServiceJSON } from "src/lib/designs/types";
+import type { FixedRouteServiceJSON, OnDemandServiceJSON } from "src/lib/designs/types";
 import { baseUrl } from "src/boot/api";
 
 export type SimulationResultRetrieval = {
@@ -38,18 +38,32 @@ export interface SimulationRoute {
     actions: SimulationAction[];
 }
 
-export type SimulationActionType = "Walk" | "Wait" | "Ride";
-
-export interface SimulationAction {
-    type: SimulationActionType;
+export interface SimulationActionBase {
     start_time: string;
     end_time: string;
     duration_minutes: number;
     start_hex: number;
     end_hex: number;
-    walk_speed?: number; // Optional as it only appears in "Walk" actions
-    distance?: number; // Optional as it only appears in "Walk" actions
 }
+
+export interface WalkAction extends SimulationActionBase {
+    type: "Walk";
+    walk_speed: number;
+    distance: number;
+    walk_path: number[]; // List of hex IDs representing the path taken while walking
+}
+
+export interface WaitAction extends SimulationActionBase {
+    type: "Wait";
+}
+
+export interface RideAction extends SimulationActionBase {
+    type: "Ride";
+    service_name: string;
+}
+
+export type SimulationAction = WalkAction | WaitAction | RideAction;
+export type SimulationActionType = SimulationAction["type"];
 
 export interface SimulationParams {
     // gameState: GameState;
@@ -71,8 +85,9 @@ export type PostRunSimulationBody = {
     input_params: {
         hour: number;
     };
-    fixed_route_services?: {
-        services: FixedRouteServiceJSON[];
+    services?: {
+        fixed_route_services: FixedRouteServiceJSON[];
+        on_demand_services: OnDemandServiceJSON[];
     } | undefined;
 };
 

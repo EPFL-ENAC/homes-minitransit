@@ -14,7 +14,7 @@ manager = SimulationManager()
 class PostRunSimulationBody(BaseModel):
     area_id: str
     input_params: SimulationRunnerInput
-    fixed_route_services: dict | None = None
+    services: dict | None = None
 
 
 class PostRunSimulationResponse(BaseModel):
@@ -42,7 +42,7 @@ async def run_simulation(body: PostRunSimulationBody) -> PostRunSimulationRespon
         SimulationInput(
             city_name=body.area_id,
             input_params=body.input_params,
-            fixed_route_services=body.fixed_route_services,
+            services=body.services,
         )
     )
     return PostRunSimulationResponse(run_id=run.id)

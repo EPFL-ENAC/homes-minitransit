@@ -28,7 +28,10 @@ const { resultRef: simulationId, trigger: runSimulation } = useLazyGenerator(fun
         input_params: {
             hour: pageParams.value.hour,
         },
-        fixed_route_services: designsStore.selectedDesign ? { services: designsStore.selectedDesign.fixedRouteServices.map(service => service.toJSON()) } : undefined
+        services: designsStore.selectedDesign ? {
+            fixed_route_services: designsStore.selectedDesign.fixedRouteServices.map(service => service.toJSON()),
+            on_demand_services: [...designsStore.selectedDesign.onDemandDockedServices, ...designsStore.selectedDesign.onDemandFreeFloatingServices].map(service => service.toJSON())
+        } : undefined
     }));
 
     void updateParams({ simulationId: simulationId.run_id });

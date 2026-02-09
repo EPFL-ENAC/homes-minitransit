@@ -1,7 +1,9 @@
 import type { GeoJSONSource, Map as MaplibreMap } from "maplibre-gl";
 import { lngLatOffsetToHexagonCenter } from "src/lib/designs/hexagons/hexagonsUtils";
-import type { SimulationRoute } from "src/stores/simulation";
+import type { RideAction, SimulationRoute, WalkAction } from "src/stores/simulation";
 import type { HexagonMesh } from "../hexagons/hexagonMesh";
+import { TransitSystemDesign } from "../transitSystemDesign";
+import { FixedRouteServiceJSON } from "../types";
 
 export class RoutesMesh {
     private uuid = crypto.randomUUID();
@@ -21,57 +23,26 @@ export class RoutesMesh {
         return `route-mesh-arrows-${this.uuid}`;
     }
 
-    setRoutes(routes: SimulationRoute[], hexagons: HexagonMesh) {
+    setRoutes(routes: SimulationRoute[], hexagons: HexagonMesh, design: TransitSystemDesign | null) {
         this.routes = routes;
         if (this.source) {
-            this.source.setData(this.generateGeoJSON(hexagons));
+            this.source.setData(this.generateGeoJSON(hexagons, design));
         }
     }
 
-    private generateGeoJSON(hexagons: HexagonMesh): GeoJSON.FeatureCollection<GeoJSON.Geometry> {
+    private generateGeoJSON(hexagons: HexagonMesh, design: TransitSystemDesign | null): GeoJSON.FeatureCollection<GeoJSON.Geometry> {
         const features: GeoJSON.Feature<GeoJSON.Geometry>[] = [];
 
         for (const route of this.routes) {
             for (const action of route.actions) {
-                const coords = hexagons.getCoordinatesOfIds(
-                    [action.start_hex, action.end_hex],
-                    lngLatOffsetToHexagonCenter,
-                );
-
-                /* if (coords.length === 2) {
-                    features.push({
-                        type: "Feature",
-                        properties: {
-                            actionType: action.type,
-                        },
-                        geometry: {
-                            type: "LineString",
-                            coordinates: coords,
-                        },
-                    });
-                } */
-
-                if (coords.length === 2) {
-                    // 1. The Line
-                    features.push({
-                        type: "Feature",
-                        properties: { actionType: action.type, kind: "line" },
-                        geometry: { type: "LineString", coordinates: coords },
-                    });
-
-                    // 2. The Tip (Point)
-                    // We calculate the angle between the two points so the arrow rotates correctly
-                    const angle = this.calculateAngle(coords[0]!, coords[1]!);
-
-                    features.push({
-                        type: "Feature",
-                        properties: {
-                            actionType: action.type,
-                            kind: "tip",
-                            angle: angle
-                        },
-                        geometry: { type: "Point", coordinates: coords[1]! },
-                    });
+                if (action.type === "Walk") {
+                    const walkGeoJSON = this.generateWalkGeoJSON(action as WalkAction, hexagons);
+                    features.push(...walkGeoJSON.features);
+                } else if (action.type === "Ride" && design) {
+                    const rideGeoJSON = this.generateRideGeoJSON(action as RideAction, hexagons, design);
+                    features.push(...rideGeoJSON.features);
+                } else if (action.type === "Wait") {
+                    // We could also visualize waiting, but for now let's skip it since it's less critical to show on the map
                 }
             }
         }
@@ -79,6 +50,90 @@ export class RoutesMesh {
         return {
             type: "FeatureCollection",
             features,
+        };
+    }
+
+    private generateWalkGeoJSON(action: WalkAction, hexagons: HexagonMesh): GeoJSON.FeatureCollection<GeoJSON.Geometry> {
+        const coords = hexagons.getCoordinatesOfIds(
+            action.walk_path,
+            lngLatOffsetToHexagonCenter,
+        );
+
+        if (coords.length >= 2) {
+            return {
+                type: "FeatureCollection",
+                features: [
+                    {
+                        type: "Feature",
+                        properties: { actionType: action.type, kind: "line" },
+                        geometry: { type: "LineString", coordinates: coords },
+                    },
+                    {
+                        type: "Feature",
+                        properties: {
+                            actionType: action.type,
+                            kind: "tip",
+                            angle: this.calculateAngle(coords.at(-2)!, coords.at(-1)!),
+                        },
+                        geometry: { type: "Point", coordinates: coords.at(-1)! },
+                    },
+                ],
+            };
+        }
+
+        return {
+            type: "FeatureCollection",
+            features: [],
+        };
+    }
+
+    private generateRideGeoJSON(action: RideAction, hexagons: HexagonMesh, design: TransitSystemDesign): GeoJSON.FeatureCollection<GeoJSON.Geometry> {
+        const service = design.fixedRouteServices.find(s => s.name === action.service_name)?.toJSON() as FixedRouteServiceJSON | undefined;
+        if (!service) {
+            console.warn(`Service ${action.service_name} not found in design`);
+            return {
+                type: "FeatureCollection",
+                features: [],
+            };
+        }
+
+        const startIndex = service.stops.findIndex(s => s === action.start_hex);
+        const endIndex = service.stops.findIndex(s => s === action.end_hex);
+        const stops = service.stops.slice(Math.min(startIndex, endIndex), Math.max(startIndex, endIndex) + 1);
+        if (endIndex < startIndex) {
+            stops.reverse();
+        }
+        
+        const coords = hexagons.getCoordinatesOfIds(
+            stops,
+            lngLatOffsetToHexagonCenter,
+        );
+
+        if (coords.length >= 2) {
+            return {
+                type: "FeatureCollection",
+                features: [
+                    {
+                        type: "Feature",
+                        properties: { actionType: action.type, kind: "line" },
+                        geometry: { type: "LineString", coordinates: coords },
+                    },
+                    {
+                        type: "Feature",
+                        properties: {
+                            actionType: action.type,
+                            kind: "tip",
+                            angle: this.calculateAngle(coords.at(-2)!, coords.at(-1)!),
+                        },
+                        geometry: { type: "Point", coordinates: coords.at(-1)! },
+                    },
+                ],
+            };
+        }
+
+        return {
+            type: "FeatureCollection",
+            features: [],
         };
     }
 

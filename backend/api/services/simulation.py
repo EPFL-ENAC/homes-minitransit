@@ -25,7 +25,7 @@ from minitransit_simulation import (
 class SimulationInput:
     city_name: str
     input_params: SimulationRunnerInput
-    fixed_route_services: dict | None = None
+    services: dict | None = None
 
 
 @dataclass
@@ -145,7 +145,8 @@ def _run_simulation(
             f"{inputs.city_name}_time_dependent_demands.csv",
         ),
     )
-    runner.add_fixed_route_services_from_dict(inputs.fixed_route_services)
+    print(inputs)
+    runner.add_services_from_dict(inputs.services)
     result = runner.run_simulation(inputs.input_params)
 
     return result
