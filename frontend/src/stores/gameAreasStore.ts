@@ -10,8 +10,10 @@ export type GameAreaMode = "origin" | "destination";
 export interface GameState {
     areaId: string;
     hour: number;
+    showDemand: boolean;
     mode: GameAreaMode;
     design: TransitSystemDesign | null;
+    shownServices: Set<string>;
     simulationId: string | null;
     pickedHexId: number | null;
     pickedServiceName: string | null;

@@ -67,19 +67,23 @@ export class HexagonMesh {
         return getCoordsFromHexagons(this.geoJson!, hexIds, offset);
     }
 
-    setDemandKey(demandKey: string) {
+    setDemandKey(demandKey: string, showDemand: boolean = true) {
         this.demandKey = demandKey;
 
         if (!this.map) return;
 
-        this.map.setPaintProperty(this.fillerLayerId, "fill-color", [
-            "interpolate",
-            ["linear"],
-            ["get", demandKey],
-            0, "rgb(187, 187, 187)",
-            1, "rgb(0, 0, 255)",
-            200, "rgb(255, 0, 0)"
-        ]);
+        if (showDemand) {
+            this.map.setPaintProperty(this.fillerLayerId, "fill-color", [
+                "interpolate",
+                ["linear"],
+                ["get", demandKey],
+                0, "rgba(51, 51, 51, 0.5)",
+                1, "rgb(51, 51, 51)",
+                200, "rgb(255, 51, 51)"
+            ]);
+        } else {
+            this.map.setPaintProperty(this.fillerLayerId, "fill-color", "rgba(51, 51, 51, 0.5)");
+        }
         this.map.setPaintProperty(this.fillerLayerId, "fill-opacity", [
             "case",
             ["boolean", ["feature-state", "hover"], false],

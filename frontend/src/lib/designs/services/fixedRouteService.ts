@@ -70,7 +70,6 @@ export class FixedRouteService extends BaseDesignService<FixedRouteServiceJSON> 
                     14, 8,
                     18, 16
                 ],
-                "line-dasharray": [1.5, 1],
             },
         });
 
@@ -95,15 +94,32 @@ export class FixedRouteService extends BaseDesignService<FixedRouteServiceJSON> 
 
     override setVisualState(state: DesignVisualState) {
         super.setVisualState(state);
-        
+
         if (!this.map) return;
-        
+
         const opacity = state === "normal" ? 0.6 : 1;
-        
+
         this.map.setPaintProperty(this.lineLayerId, "line-opacity", opacity);
         this.map.setPaintProperty(this.stopsLayerId, "circle-opacity", opacity);
-        
-        const dasharray = state === "selected" ? [1, 0] : [1.5, 1];
-        this.map.setPaintProperty(this.lineLayerId, "line-dasharray", dasharray);
+
+        const multiplier = state === "selected" ? 1.65 : 1;
+        this.map.setPaintProperty(this.lineLayerId, "line-width", [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            5, 1 * multiplier,
+            10, 3 * multiplier,
+            14, 8 * multiplier,
+            18, 16 * multiplier
+        ]);
+        this.map.setPaintProperty(this.stopsLayerId, "circle-radius", [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            5, 1 * multiplier,
+            10, 2 * multiplier,
+            14, 10 * multiplier,
+            18, 48 * multiplier
+        ]);
     }
 }

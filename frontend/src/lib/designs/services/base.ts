@@ -21,6 +21,17 @@ export abstract class BaseDesignService<T> {
     abstract get geojsonSourceId(): string;
     abstract get layerIds(): string[];
 
+    toggleVisibility(visible: boolean): void {
+        if (!this.map) return;
+        
+        const visibility = visible ? "visible" : "none";
+        this.layerIds.forEach(layerId => {
+            if (this.map!.getLayer(layerId)) {
+                this.map!.setLayoutProperty(layerId, "visibility", visibility);
+            }
+        });
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     drawOnMap(m: MaplibreMap, hexagons: HexagonMesh, color: string): void {
         this.removeFromMap();
@@ -42,8 +53,10 @@ export abstract class BaseDesignService<T> {
         let clicksRemaining = 0;
 
         const updateHover = () => {
-            const isHovered = hoverCount > 0 || this.selected;
-            this.setVisualState(isHovered ? "hovered" : "normal");
+            const isHovered = hoverCount > 0;
+            if (!this.selected) {
+                this.setVisualState(isHovered ? "hovered" : "normal");
+            }
             m.getCanvas().style.cursor = isHovered ? "pointer" : "grab";
         };
 

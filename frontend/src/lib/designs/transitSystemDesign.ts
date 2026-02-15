@@ -38,6 +38,16 @@ export class TransitSystemDesign {
         return design;
     }
 
+    toJSON(): TransitSystemDesignJSON {
+        return {
+            fixed_route_services: this.fixedRouteServices.map(s => s.toJSON()),
+            ondemand_services: [
+                ...this.onDemandDockedServices.map(s => s.toJSON()),
+                ...this.onDemandFreeFloatingServices.map(s => s.toJSON()),
+            ],
+        }
+    }
+
     drawOnMap(m: MaplibreMap, hexagons: HexagonMesh, onServiceClicked?: (service: DesignService) => void) {
         this.removeFromMap();
         this.map = m;
@@ -64,6 +74,12 @@ export class TransitSystemDesign {
     removeFromMap() {
         for (const service of this.services) {
             service.removeFromMap();
+        }
+    }
+
+    setVisibleServices(serviceNames: Set<string>) {
+        for (const service of this.services) {
+            service.toggleVisibility(serviceNames.has(service.name));
         }
     }
 }

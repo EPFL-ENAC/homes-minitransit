@@ -2,8 +2,7 @@ import type { GeoJSONSource, Map as MaplibreMap } from "maplibre-gl";
 import { lngLatOffsetToHexagonCenter } from "src/lib/designs/hexagons/hexagonsUtils";
 import type { RideAction, SimulationRoute, WalkAction } from "src/stores/simulation";
 import type { HexagonMesh } from "../hexagons/hexagonMesh";
-import { TransitSystemDesign } from "../transitSystemDesign";
-import { FixedRouteServiceJSON } from "../types";
+import type { TransitSystemDesign } from "../transitSystemDesign";
 
 export class RoutesMesh {
     private uuid = crypto.randomUUID();
@@ -36,10 +35,10 @@ export class RoutesMesh {
         for (const route of this.routes) {
             for (const action of route.actions) {
                 if (action.type === "Walk") {
-                    const walkGeoJSON = this.generateWalkGeoJSON(action as WalkAction, hexagons);
+                    const walkGeoJSON = this.generateWalkGeoJSON(action, hexagons);
                     features.push(...walkGeoJSON.features);
                 } else if (action.type === "Ride" && design) {
-                    const rideGeoJSON = this.generateRideGeoJSON(action as RideAction, hexagons, design);
+                    const rideGeoJSON = this.generateRideGeoJSON(action, hexagons, design);
                     features.push(...rideGeoJSON.features);
                 } else if (action.type === "Wait") {
                     // We could also visualize waiting, but for now let's skip it since it's less critical to show on the map
@@ -88,7 +87,7 @@ export class RoutesMesh {
     }
 
     private generateRideGeoJSON(action: RideAction, hexagons: HexagonMesh, design: TransitSystemDesign): GeoJSON.FeatureCollection<GeoJSON.Geometry> {
-        const service = design.fixedRouteServices.find(s => s.name === action.service_name)?.toJSON() as FixedRouteServiceJSON | undefined;
+        const service = design.fixedRouteServices.find(s => s.name === action.service_name)?.toJSON();
         if (!service) {
             console.warn(`Service ${action.service_name} not found in design`);
             return {
@@ -103,7 +102,7 @@ export class RoutesMesh {
         if (endIndex < startIndex) {
             stops.reverse();
         }
-        
+
         const coords = hexagons.getCoordinatesOfIds(
             stops,
             lngLatOffsetToHexagonCenter,

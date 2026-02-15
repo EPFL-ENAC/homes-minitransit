@@ -135,75 +135,50 @@ function computeStatistics(group: Omit<SimulationRouteGroup, "statistics">): Sim
 </script>
 
 <template>
-    <div class="q-mt-md heading">Number of routes {{ props.mode === "destination" ? "arriving to" : "departing from" }}
-        #{{ props.hexId }}</div>
-    <div>{{ props.routes.length }}</div>
-
     <div v-for="routeGroup in uniquePaths" :key="`${routeGroup.from}-${routeGroup.to}`" class="q-mt-md">
-        <div class="heading">{{ routeGroup.from }} → {{ routeGroup.to }}</div>
-
-        <q-markup-table flat>
-            <tbody>
-                <tr>
-                    <td>Number of travels</td>
-                    <td class="text-right">{{ routeGroup.routes.length }}</td>
-                </tr>
-                <tr>
-                    <td>Total travel time (minutes)</td>
-                    <td class="text-right">{{ routeGroup.statistics.totalTravelTimeMinutes }}</td>
-                </tr>
-                <tr>
-                    <td>Mean travel time (minutes)</td>
-                    <td class="text-right">{{ routeGroup.statistics.averageTravelTimeMinutes.toFixed(2) }}</td>
-                </tr>
-                <tr>
-                    <td>Min travel time (minutes)</td>
-                    <td class="text-right">{{ routeGroup.statistics.minTravelTimeMinutes.toFixed(2) }}</td>
-                </tr>
-                <tr>
-                    <td>Max travel time (minutes)</td>
-                    <td class="text-right">{{ routeGroup.statistics.maxTravelTimeMinutes.toFixed(2) }}</td>
-                </tr>
-                <tr>
-                    <td>Total waiting time (minutes)</td>
-                    <td class="text-right">{{ routeGroup.statistics.totalWaitingTimeMinutes }}</td>
-                </tr>
-                <tr>
-                    <td>Mean waiting time (minutes)</td>
-                    <td class="text-right">{{ routeGroup.statistics.averageWaitingTimeMinutes.toFixed(2) }}</td>
-                </tr>
-                <tr>
-                    <td>Min waiting time (minutes)</td>
-                    <td class="text-right">{{ routeGroup.statistics.minWaitingTimeMinutes.toFixed(2) }}</td>
-                </tr>
-                <tr>
-                    <td>Max waiting time (minutes)</td>
-                    <td class="text-right">{{ routeGroup.statistics.maxWaitingTimeMinutes.toFixed(2) }}</td>
-                </tr>
-                <tr>
-                    <td>Total fare</td>
-                    <td class="text-right">{{ routeGroup.statistics.totalFare }}</td>
-                </tr>
-                <tr>
-                    <td>Mean fare</td>
-                    <td class="text-right">{{ routeGroup.statistics.averageFare.toFixed(2) }}</td>
-                </tr>
-                <tr>
-                    <td>Min fare</td>
-                    <td class="text-right">{{ routeGroup.statistics.minFare.toFixed(2) }}</td>
-                </tr>
-                <tr>
-                    <td>Max fare</td>
-                    <td class="text-right">{{ routeGroup.statistics.maxFare.toFixed(2) }}</td>
-                </tr>
-            </tbody>
-        </q-markup-table>
+        <div class="inspector-heading">{{ routeGroup.from }} → {{ routeGroup.to }}</div>
+        <q-table
+            :columns="[
+                { name: 'measure', label: 'Measure', field: 'measure', align: 'left' },
+                { name: 'average', label: 'Average', field: 'average', align: 'right' },
+                { name: 'min', label: 'Min', field: 'min', align: 'right' },
+                { name: 'max', label: 'Max', field: 'max', align: 'right' },
+                { name: 'total', label: 'Total', field: 'total', align: 'right' },
+            ]"
+            :rows="[
+                {
+                    measure: 'Total demand',
+                    average: '-',
+                    min: '-',
+                    max: '-',
+                    total: routeGroup.routes.length,
+                },
+                {
+                    measure: 'Travel time (minutes)',
+                    average: routeGroup.statistics.averageTravelTimeMinutes.toFixed(2),
+                    min: routeGroup.statistics.minTravelTimeMinutes.toFixed(2),
+                    max: routeGroup.statistics.maxTravelTimeMinutes.toFixed(2),
+                    total: routeGroup.statistics.totalTravelTimeMinutes,
+                },
+                {
+                    measure: 'Waiting time (minutes)',
+                    average: routeGroup.statistics.averageWaitingTimeMinutes.toFixed(2),
+                    min: routeGroup.statistics.minWaitingTimeMinutes.toFixed(2),
+                    max: routeGroup.statistics.maxWaitingTimeMinutes.toFixed(2),
+                    total: routeGroup.statistics.totalWaitingTimeMinutes,
+                },
+                {
+                    measure: 'Fare (CHF)',
+                    average: routeGroup.statistics.averageFare.toFixed(2),
+                    min: routeGroup.statistics.minFare.toFixed(2),
+                    max: routeGroup.statistics.maxFare.toFixed(2),
+                    total: routeGroup.statistics.totalFare,
+                },
+            ]"
+            row-key="id"
+            flat
+            class="q-mt-md"
+            hide-bottom
+        />
     </div>
 </template>
-
-<style scoped>
-.heading {
-    font-weight: 500;
-    font-size: 1.1em;
-}
-</style>

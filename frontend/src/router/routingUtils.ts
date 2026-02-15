@@ -4,8 +4,10 @@ import { useRoute, useRouter, type LocationQuery } from "vue-router";
 
 export type DemandPageUrlParams = {
     areaId: string | undefined;
+    showDemand: boolean;
     hour: number;
     mode: GameAreaMode;
+    designCompressed: string | null;
     simulationId: string | null;
     pickedHexId: number | null;
     pickedServiceName?: string | null;
@@ -22,8 +24,10 @@ function getHour(hourString: string | undefined): number {
 export function extractDemandPageUrlParams(query: LocationQuery): DemandPageUrlParams {
     return {
         areaId: query.areaId as string | undefined,
+        showDemand: query.showDemand !== "false", // default to true if not specified
         hour: getHour(query.hour as string | undefined),
         mode: (query.mode ?? "origin") as GameAreaMode,
+        designCompressed: query.designCompressed as string || null,
         simulationId: query.simulationId as string || null,
         pickedHexId: query.pickedHexId ? parseInt(query.pickedHexId as string) : null,
         pickedServiceName: query.pickedServiceName ? (query.pickedServiceName as string) : null

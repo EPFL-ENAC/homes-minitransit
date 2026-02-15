@@ -9,13 +9,14 @@ import {
     type LngLatLike,
     type StyleSpecification
 } from 'maplibre-gl';
-import { onMounted, useTemplateRef, watch } from 'vue';
+import { onMounted, useTemplateRef } from 'vue';
 import { useLazyAction, useAsyncResultCollection } from 'unwrapped/vue';
 import { AsyncResult, Result } from 'unwrapped/core';
 import { useGameAreasStore, type GameState } from 'src/stores/gameAreasStore';
 import { type SimulationRoute, useSimulationsStore } from 'src/stores/simulation';
 import { HexagonMesh } from 'src/lib/designs/hexagons/hexagonMesh';
 import { RoutesMesh } from 'src/lib/designs/routes/routes';
+import { useGameStateStore } from 'src/stores/gameState';
 
 interface Props {
     style?: string | StyleSpecification | undefined;
@@ -24,14 +25,9 @@ interface Props {
 }
 const props = defineProps<Props>();
 
-const gameState = defineModel<GameState>("gameState");
 const gameAreaStore = useGameAreasStore();
 const simulationsStore = useSimulationsStore();
-
-const emit = defineEmits<{
-    (e: "hexagonClicked", hexId: number, properties: Record<string, unknown>): void;
-    (e: "serviceClicked", serviceName: string): void;
-}>();
+const gameStateStore = useGameStateStore();
 
 const { resultRef: map, trigger: loadMap } = useLazyAction<Map>(() => {
     return new Promise<Result<Map>>((resolve) => {
@@ -56,28 +52,28 @@ const container = useTemplateRef<HTMLDivElement>('container');
 onMounted(() => {
     loadMap();
     tasks.value.add("map", map.value, false);
-    updateState(gameState.value, undefined);
+
+    gameStateStore.gameState.listen((result, oldState) => {
+        updateState(result, oldState?.status === "success" ? oldState.value : undefined);
+    });
 });
 
-watch(gameState, (newState, oldState) => {
-    updateState(newState, oldState);
-});
 
 const hexagons = new HexagonMesh();
 const routes = new RoutesMesh();
 
 function postLoad(m: Map) {
     hexagons.drawOnMap(m);
-    hexagons.onClicked((hexId, properties) => {
-        emit("hexagonClicked", hexId, properties);
+    hexagons.onClicked((hexId) => {
+        gameStateStore.updateState({ pickedHexId: hexId });
     });
     routes.drawOnMap(m);
 }
 
-function updateState(newState: GameState | undefined, oldState: GameState | undefined) {
-    if (!newState) return;
+function updateState(newStateResult: AsyncResult<GameState>, oldState: GameState | undefined) {
+    return tasks.value.add(`map-update-${crypto.randomUUID()}`, AsyncResult.run(function* () {
+        const newState = yield* newStateResult;
 
-    return tasks.value.add(`area-${crypto.randomUUID()}`, AsyncResult.run(function* () {
         if (!newState.areaId) {
             return;
         }
@@ -103,15 +99,16 @@ function updateState(newState: GameState | undefined, oldState: GameState | unde
             }
         }
 
-        hexagons.setDemandKey(demandKey);
+        hexagons.setDemandKey(demandKey, newState.showDemand);
 
         if (newState.design) {
             if (newState.design !== oldState?.design) {
                 newState.design.drawOnMap(m, hexagons, (service) => {
-                    emit("serviceClicked", service.name);
+                    gameStateStore.updateState({ pickedServiceName: service.name });
                 });
             }
             newState.design.selectService(newState.pickedServiceName || null);
+            newState.design.setVisibleServices(newState.shownServices);
         } else if (oldState?.design) {
             oldState.design.removeFromMap();
         }

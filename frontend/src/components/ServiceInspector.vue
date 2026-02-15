@@ -15,7 +15,7 @@ const props = defineProps<{
                 <td class="text-right">Fixed Route</td>
             </tr>
             <tr>
-                <td>Capacity</td>
+                <td>Capacity per vehicle</td>
                 <td class="text-right">{{ props.service.fixedRouteService.capacity }}</td>
             </tr>
             <tr>
@@ -23,7 +23,7 @@ const props = defineProps<{
                 <td class="text-right">{{ props.service.fixedRouteService.stops.length }}</td>
             </tr>
             <tr>
-                <td>Frequency</td>
+                <td>Headway (min)</td>
                 <td class="text-right">{{ props.service.fixedRouteService.frequency }}</td>
             </tr>
             <tr>
@@ -31,14 +31,14 @@ const props = defineProps<{
                 <td class="text-right">{{ props.service.fixedRouteService.stopping_time }}</td>
             </tr>
             <tr>
-                <td>Travel time</td>
+                <td>Speed (hex per min)</td>
                 <td class="text-right">{{ props.service.fixedRouteService.travel_time }}</td>
             </tr>
         </template>
         <template v-else-if="(props.service instanceof OnDemandDockedService)">
             <tr>
                 <td>Type</td>
-                <td class="text-right">On Demand Docked</td>
+                <td class="text-right">Docked Bikesharing</td>
             </tr>
             <tr>
                 <td>Capacity</td>
@@ -49,8 +49,12 @@ const props = defineProps<{
                 <td class="text-right">{{ props.service.onDemandService.docking_stations.length }}</td>
             </tr>
             <tr>
-                <td>Number of vehicles</td>
+                <td>Fleet size</td>
                 <td class="text-right">{{ props.service.onDemandService.vehicles.length }}</td>
+            </tr>
+            <tr>
+                <td>Total dock capacity</td>
+                <td class="text-right">{{ props.service.onDemandService.docking_stations.reduce((sum, station) => sum + station.capacity, 0) }}</td>
             </tr>
         </template>
     </tbody>
