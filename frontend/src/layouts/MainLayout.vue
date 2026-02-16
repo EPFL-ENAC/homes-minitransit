@@ -5,7 +5,7 @@
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
         
         <q-toolbar-title>
-          Quasar App
+          MiniTransit
         </q-toolbar-title>
         
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleRightDrawer" />

@@ -4,6 +4,11 @@ import type { Map as MaplibreMap } from 'maplibre-gl';
 import { BaseDesignService, type DesignVisualState } from "./base";
 import type { HexagonMesh } from "../hexagons/hexagonMesh";
 
+export interface OnDemandFreeFloatingServiceHexagonInfo {
+    service: OnDemandFreeFloatingService;
+    type: "on_demand_free_floating"
+}
+
 export class OnDemandFreeFloatingService extends BaseDesignService<OnDemandServiceJSON> {
     static fromJSON(json: OnDemandServiceJSON): OnDemandFreeFloatingService {
         return new OnDemandFreeFloatingService(json.name, json);
@@ -78,5 +83,17 @@ export class OnDemandFreeFloatingService extends BaseDesignService<OnDemandServi
 
         // const opacity = state === "normal" ? 0.6 : 1;
         // m.setPaintProperty(this.dockingStationsLayerId, "circle-opacity", opacity);
+    }
+
+    override infoForHexagon(hexId: number): OnDemandFreeFloatingServiceHexagonInfo | null {
+        const stops = this.onDemandService.docking_stations.map(ds => ds.location);
+        if (!stops.includes(hexId)) {
+            return null;
+        }
+
+        return {
+            service: this,
+            type: "on_demand_free_floating",
+        };
     }
 }

@@ -3,6 +3,12 @@ import type { Map as MaplibreMap } from 'maplibre-gl';
 import { BaseDesignService, type DesignVisualState } from "./base";
 import type { HexagonMesh } from "../hexagons/hexagonMesh";
 
+export interface FixedRouteServiceHexagonInfo {
+    service: FixedRouteService;
+    type: "fixed_route"
+    stopId: number;
+}
+
 export class FixedRouteService extends BaseDesignService<FixedRouteServiceJSON> {
     static fromJSON(json: FixedRouteServiceJSON): FixedRouteService {
         return new FixedRouteService(json.name, json);
@@ -121,5 +127,17 @@ export class FixedRouteService extends BaseDesignService<FixedRouteServiceJSON> 
             14, 10 * multiplier,
             18, 48 * multiplier
         ]);
+    }
+
+    override infoForHexagon(hexId: number): FixedRouteServiceHexagonInfo | null {
+        const index = this.fixedRouteService.stops.indexOf(hexId);
+        if (index !== -1) {
+            return {
+                service: this,
+                type: "fixed_route",
+                stopId: index,
+            } as FixedRouteServiceHexagonInfo;
+        }
+        return null;
     }
 }

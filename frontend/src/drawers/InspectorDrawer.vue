@@ -99,6 +99,8 @@ function downloadResults() {
     });
 }
 
+const debounced = gameStateStore.gameState.toDebounced(100);
+
 </script>
 
 <template>
@@ -107,10 +109,9 @@ function downloadResults() {
             <div class="text-h5 q-mb-md">Inspector</div>
         </div>
 
-        <game-state-loader :result="gameStateStore.gameState">
+        <game-state-loader :result="debounced">
             <template #default="{ value: state }">
-                
-                <hex-inspector :current-hex="currentHex.unwrapOrNull()" :hour="state.hour" />
+                <hex-inspector :current-hex="currentHex.unwrapOrNull()" :design="state.design" :hour="state.hour" />
         
                 <q-expansion-item v-if="serviceOptions.unwrapOrNull()?.length" label="Services" header-class="text-h6" v-model="servicePanelOpen">
                     <div class="q-px-md q-pb-md">

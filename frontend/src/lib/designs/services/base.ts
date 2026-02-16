@@ -113,4 +113,9 @@ export abstract class BaseDesignService<T> {
 
         this.map = null;
     }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    infoForHexagon(hexId: number): object | null {
+        return null;
+    }
 }

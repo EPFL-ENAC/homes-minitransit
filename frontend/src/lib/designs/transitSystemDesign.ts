@@ -1,9 +1,8 @@
 import type { HexagonMesh } from "./hexagons/hexagonMesh";
-import { type DesignService, FixedRouteService, OnDemandDockedService, OnDemandFreeFloatingService } from "./services";
+import { type DesignService, FixedRouteService, OnDemandDockedService, OnDemandFreeFloatingService, type ServiceHexagonInfo } from "./services";
 import type { BaseDesignService } from "./services/base";
 import type { TransitSystemDesignJSON } from "./types";
 import type { Map as MaplibreMap } from 'maplibre-gl';
-
 
 export class TransitSystemDesign {
     fixedRouteServices: FixedRouteService[] = [];
@@ -81,5 +80,18 @@ export class TransitSystemDesign {
         for (const service of this.services) {
             service.toggleVisibility(serviceNames.has(service.name));
         }
+    }
+
+    infoForHexagon(hexId: number): ServiceHexagonInfo[] {
+        const info: ServiceHexagonInfo[] = [];
+
+        for (const service of this.services) {
+            const hexInfo = service.infoForHexagon(hexId);
+            if (hexInfo) {
+                info.push(hexInfo);
+            }
+        }
+
+        return info;
     }
 }

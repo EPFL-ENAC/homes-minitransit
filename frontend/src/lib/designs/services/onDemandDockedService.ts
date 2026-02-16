@@ -1,7 +1,14 @@
 import type { OnDemandServiceJSON } from "../types";
 import type { Map as MaplibreMap } from 'maplibre-gl';
-import{ BaseDesignService, type DesignVisualState } from "./base";
+import { BaseDesignService, type DesignVisualState } from "./base";
 import type { HexagonMesh } from "../hexagons/hexagonMesh";
+
+export interface OnDemandDockedServiceHexagonInfo {
+    service: OnDemandDockedService;
+    type: "on_demand_docked"
+    dockId: number;
+    dockCapacity: number;
+}
 
 export class OnDemandDockedService extends BaseDesignService<OnDemandServiceJSON> {
     static fromJSON(json: OnDemandServiceJSON): OnDemandDockedService {
@@ -72,11 +79,24 @@ export class OnDemandDockedService extends BaseDesignService<OnDemandServiceJSON
 
     override setVisualState(state: DesignVisualState) {
         if (!this.map) return;
-        
+
         super.setVisualState(state);
-        
+
         const opacity = state === "normal" ? 0.6 : 1;
 
         this.map.setPaintProperty(this.dockingStationsLayerId, "circle-opacity", opacity);
+    }
+
+    override infoForHexagon(hexId: number): OnDemandDockedServiceHexagonInfo | null {
+        const dockingStation = this.onDemandService.docking_stations.find(ds => ds.location === hexId);
+        if (dockingStation) {
+            return {
+                service: this,
+                dockId: dockingStation.location,
+                type: "on_demand_docked",
+                dockCapacity: dockingStation.capacity,
+            };
+        }
+        return null;
     }
 }

@@ -40,7 +40,7 @@ const props = defineProps<{
                 <td>Type</td>
                 <td class="text-right">Docked Bikesharing</td>
             </tr>
-            <tr>
+            <tr v-if="props.service.onDemandService.capacity > 1">
                 <td>Capacity</td>
                 <td class="text-right">{{ props.service.onDemandService.capacity }}</td>
             </tr>
@@ -50,7 +50,7 @@ const props = defineProps<{
             </tr>
             <tr>
                 <td>Fleet size</td>
-                <td class="text-right">{{ props.service.onDemandService.vehicles.length }}</td>
+                <td class="text-right">{{ props.service.onDemandService.vehicles.reduce((sum, vehicle) => sum + vehicle.capacity, 0) }}</td>
             </tr>
             <tr>
                 <td>Total dock capacity</td>

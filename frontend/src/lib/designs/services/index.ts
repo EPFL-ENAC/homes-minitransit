@@ -1,6 +1,6 @@
-import { FixedRouteService } from "./fixedRouteService";
-import { OnDemandDockedService } from "./onDemandDockedService";
-import { OnDemandFreeFloatingService } from "./onDemandFreeFloatingService";
+import { FixedRouteService, type FixedRouteServiceHexagonInfo } from "./fixedRouteService";
+import { OnDemandDockedService, type OnDemandDockedServiceHexagonInfo } from "./onDemandDockedService";
+import { OnDemandFreeFloatingService, type OnDemandFreeFloatingServiceHexagonInfo } from "./onDemandFreeFloatingService";
 
 export { FixedRouteService };
 export { OnDemandDockedService };
@@ -10,3 +10,6 @@ export type DesignService =
     | FixedRouteService
     | OnDemandDockedService
     | OnDemandFreeFloatingService;
+
+
+export type ServiceHexagonInfo = FixedRouteServiceHexagonInfo | OnDemandDockedServiceHexagonInfo | OnDemandFreeFloatingServiceHexagonInfo;

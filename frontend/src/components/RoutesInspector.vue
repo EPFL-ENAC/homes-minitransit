@@ -43,7 +43,7 @@ const uniquePaths = computed(() => {
     const otherHex = props.mode === "origin" ? "end_hex" : "start_hex";
 
     for (const route of props.routes) {
-        const lastAction = route.actions[otherOffset];
+        const lastAction = route.actions.at(otherOffset);
         if (!lastAction) {
             continue;
         }
@@ -158,21 +158,21 @@ function computeStatistics(group: Omit<SimulationRouteGroup, "statistics">): Sim
                     average: routeGroup.statistics.averageTravelTimeMinutes.toFixed(2),
                     min: routeGroup.statistics.minTravelTimeMinutes.toFixed(2),
                     max: routeGroup.statistics.maxTravelTimeMinutes.toFixed(2),
-                    total: routeGroup.statistics.totalTravelTimeMinutes,
+                    total: routeGroup.statistics.totalTravelTimeMinutes.toFixed(2),
                 },
                 {
                     measure: 'Waiting time (minutes)',
                     average: routeGroup.statistics.averageWaitingTimeMinutes.toFixed(2),
                     min: routeGroup.statistics.minWaitingTimeMinutes.toFixed(2),
                     max: routeGroup.statistics.maxWaitingTimeMinutes.toFixed(2),
-                    total: routeGroup.statistics.totalWaitingTimeMinutes,
+                    total: routeGroup.statistics.totalWaitingTimeMinutes.toFixed(2),
                 },
                 {
                     measure: 'Fare (CHF)',
                     average: routeGroup.statistics.averageFare.toFixed(2),
                     min: routeGroup.statistics.minFare.toFixed(2),
                     max: routeGroup.statistics.maxFare.toFixed(2),
-                    total: routeGroup.statistics.totalFare,
+                    total: routeGroup.statistics.totalFare.toFixed(2),
                 },
             ]"
             row-key="id"

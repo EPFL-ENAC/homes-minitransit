@@ -131,9 +131,8 @@ export class HexagonMesh {
         if (!this.map) return;
 
         const mouseMoveListener = (e: maplibregl.MapMouseEvent & { features?: MapGeoJSONFeature[]; }) => {
-            if (e.features && e.features.length > 0 && this.demandKey) {
+            if (e.features && e.features.length > 0) {
                 const feature = e.features[0]!;
-                const demand = feature.properties?.[this.demandKey] || 0;
 
                 const hexId = feature.id as number;
                 if (this.hoveredHexId !== hexId) {
@@ -142,24 +141,14 @@ export class HexagonMesh {
                         this.map!.removeFeatureState({ source: this.sourceId, id: this.hoveredHexId }, "hover");
                     }
                 }
-                if (demand > 0) {
-                    this.map!.getCanvas().style.cursor = 'pointer';
+                this.map!.getCanvas().style.cursor = 'pointer';
 
-                    // Set hover on new feature
-                    this.hoveredHexId = hexId;
-                    this.map!.setFeatureState(
-                        { source: this.sourceId, id: hexId },
-                        { hover: true }
-                    );
-                } else {
-                    // Clear hover on current hexagon and reset this.hoveredHexId
-
-                    if (this.hoveredHexId !== null) {
-                        this.map!.getCanvas().style.cursor = "grab";
-                        this.map!.removeFeatureState({ source: this.sourceId, id: this.hoveredHexId }, "hover");
-                    }
-                    this.hoveredHexId = null;
-                }
+                // Set hover on new feature
+                this.hoveredHexId = hexId;
+                this.map!.setFeatureState(
+                    { source: this.sourceId, id: hexId },
+                    { hover: true }
+                );
             } else {
                 // Clear hover if moving outside features
                 if (this.hoveredHexId !== null) {
@@ -188,11 +177,10 @@ export class HexagonMesh {
         // Reset cursor when leaving layer
         this.map.on('mouseleave', this.fillerLayerId, mouseLeaveListener);
         const clickListener = (e: maplibregl.MapMouseEvent & { features?: MapGeoJSONFeature[]; }) => {
-            if (e.features && e.features.length > 0 && this.demandKey) {
+            if (e.features && e.features.length > 0) {
                 const feature = e.features[0]!;
-                const demand = feature.properties?.[this.demandKey] || 0;
 
-                if (demand > 0 && callback) {
+                if (callback) {
                     const hexId = feature.properties?.hex_id;
                     if (hexId !== undefined) {
                         callback(hexId, feature.properties);
