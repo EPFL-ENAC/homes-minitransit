@@ -4,6 +4,7 @@ import { fetchJSON } from "./utils";
 import { computed, ref } from "vue";
 import type { FixedRouteServiceJSON, OnDemandServiceJSON } from "src/lib/designs/types";
 import { baseUrl } from "src/boot/api";
+import type { SimulationRouteGroup } from "src/lib/designs/routes/statistics";
 
 export type SimulationResultRetrieval = {
     status: "finished";
@@ -66,7 +67,6 @@ export type SimulationAction = WalkAction | WaitAction | RideAction;
 export type SimulationActionType = SimulationAction["type"];
 
 export interface SimulationParams {
-    // gameState: GameState;
     simulationId: string;
 }
 
@@ -93,6 +93,10 @@ export type PostRunSimulationBody = {
 
 export interface PostRunSimulationResult {
     run_id: string;
+}
+
+export function makeSimulationRoutesGroupId(group: SimulationRouteGroup): string {
+    return `${group.from}-${group.to}`;
 }
 
 export function watchForSimulationResult(params: SimulationParams, delayMS: number = 2000) {
@@ -137,16 +141,6 @@ export const useSimulationsStore = defineStore("simulations", () => {
             return promise;
         }
     );
-    /*
-        const demandCache = new KeyedAsyncCache<GameAreaDemandParams, GameAreaDemands>(
-            async (params: GameAreaDemandParams) => {
-                const r = await fetchCSV(`/game/areas/${params.areaId}_demands.csv`);
-                if (r.state.status === "error") {
-                    return Result.err(r.state.error);
-                }
-                return Result.ok(processDemands(r.unwrapOr([])));
-            }
-        );*/
 
     function getSimulationResult(params: SimulationParams) {
         return simulationResultCache.get(params);
@@ -181,29 +175,10 @@ export const useSimulationsStore = defineStore("simulations", () => {
 
     const allAvailableSimulations = computed(() => simulationsList.value);
 
-    /*
-        function getGameAreaDemands(params: GameAreaDemandParams) {
-            return demandCache.get(params);
-        }
-    
-        function getGameArea(area: GameAreaGeometryParams) {
-            return AsyncResult.run(function* () {
-                const geoJson = yield* geoJsonCache.get(area); // TODO make run in parallel
-                const demands = yield* demandCache.get(area);
-    
-                return {
-                    geoJson,
-                    demands,
-                } as GameArea;
-            });
-        }*/
-
     return {
-        // getGameArea,
         getSimulationResult,
         getSimulationRoute,
         runSimulation,
         allAvailableSimulations,
-        // getGameAreaDemands
     };
 });

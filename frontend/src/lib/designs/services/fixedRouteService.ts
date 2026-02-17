@@ -34,8 +34,9 @@ export class FixedRouteService extends BaseDesignService<FixedRouteServiceJSON> 
         return this.serviceData;
     }
 
-    override drawOnMap(m: MaplibreMap, hexagons: HexagonMesh, color: string = "#FF0000") {
-        super.drawOnMap(m, hexagons, color);
+    override drawOnMap(m: MaplibreMap, hexagons: HexagonMesh, beforeLayerId?: string) {
+        const cleanUp = super.drawOnMap(m, hexagons, beforeLayerId);
+        const color = `hsl(${this.hue}, 100%, 50%)`;
 
         const coordsFromHexagons = hexagons.getCoordinatesOfIds(this.fixedRouteService.stops);
 
@@ -77,7 +78,7 @@ export class FixedRouteService extends BaseDesignService<FixedRouteServiceJSON> 
                     18, 16
                 ],
             },
-        });
+        }, beforeLayerId);
 
         m.addLayer({
             id: this.stopsLayerId,
@@ -95,7 +96,9 @@ export class FixedRouteService extends BaseDesignService<FixedRouteServiceJSON> 
                 ],
                 "circle-color": color,
             }
-        });
+        }, beforeLayerId);
+
+        return cleanUp;
     }
 
     override setVisualState(state: DesignVisualState) {

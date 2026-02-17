@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import type { GameState } from 'src/stores/gameAreasStore';
-import { useGameStateStore } from 'src/stores/gameState';
+import { useGameStateStore, type GameState } from 'src/stores/gameState';
 
 const gameStateStore = useGameStateStore();
 
@@ -14,6 +13,9 @@ const props = defineProps<{
     <q-list v-if="props.state.design">
         <template v-for="service in props.state.design.services" :key="service.name">
             <q-item clickable :active="service.name === props.state.pickedServiceName" v-ripple @click="() => gameStateStore.updateState({ pickedServiceName: service.name })">
+                <q-item-section side>
+                    <div class="color" :style="{ backgroundColor: `hsl(${service.hue}, 100%, 50%)` }"></div>
+                </q-item-section>
                 <q-item-section>
                     {{ service.name }}
                 </q-item-section>
@@ -24,3 +26,11 @@ const props = defineProps<{
         </template>
     </q-list>
 </template>
+
+<style scoped>
+.color {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+}
+</style>

@@ -20,7 +20,7 @@
       <router-view />
     </q-page-container>
 
-    <q-drawer v-model="rightDrawerOpen" show-if-above side="right" bordered width-hint="350" :width="470">
+    <q-drawer v-model="rightDrawerOpen" show-if-above side="right" bordered width-hint="350" :width="480">
       <router-view name="rightDrawer" />
     </q-drawer>
   </q-layout>

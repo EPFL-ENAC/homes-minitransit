@@ -10,6 +10,7 @@ export class HexagonMesh {
     private demandKey: string | null = null;
     private uuid = crypto.randomUUID();
     private hoveredHexId: number | null = null;
+    private selectedHexId: number | null = null;
     private cleanup: (() => void)[] = [];
     private map: MaplibreMap | null = null;
 
@@ -77,22 +78,47 @@ export class HexagonMesh {
                 "interpolate",
                 ["linear"],
                 ["get", demandKey],
-                0, "rgba(51, 51, 51, 0.5)",
+                0, "rgba(51, 51, 51, 0.7)",
                 1, "rgb(51, 51, 51)",
                 200, "rgb(255, 51, 51)"
             ]);
         } else {
-            this.map.setPaintProperty(this.fillerLayerId, "fill-color", "rgba(51, 51, 51, 0.5)");
+            this.map.setPaintProperty(this.fillerLayerId, "fill-color", "rgba(51, 51, 51, 0.7)");
         }
+
         this.map.setPaintProperty(this.fillerLayerId, "fill-opacity", [
             "case",
             ["boolean", ["feature-state", "hover"], false],
             1.0,
-            0.6
+            ["boolean", ["feature-state", "selected"], false],
+            0.9,
+            0.5,
         ]);
     }
 
-    drawOnMap(m: MaplibreMap) {
+    setSelectedHexagon(hexId: number | null) {
+        if (!this.map) return;
+
+        // Clear previous selection state
+        if (this.selectedHexId !== null) {
+            this.map.setFeatureState(
+                { source: this.sourceId, id: this.selectedHexId },
+                { selected: false },
+            );
+        }
+
+        this.selectedHexId = hexId;
+
+        // Set new selection state
+        if (this.selectedHexId !== null) {
+            this.map.setFeatureState(
+                { source: this.sourceId, id: this.selectedHexId },
+                { selected: true },
+            );
+        }
+    }
+
+    drawOnMap(m: MaplibreMap, beforeLayerId?: string): () => void {
         this.map = m;
 
         if (!m.getSource(this.sourceId)) {
@@ -110,9 +136,16 @@ export class HexagonMesh {
                 source: this.sourceId,
                 paint: {
                     'fill-color': '#888888',
-                    'fill-opacity': 0.4,
+                    "fill-opacity": [
+                        "case",
+                        ["boolean", ["feature-state", "hover"], false],
+                        1.0,
+                        ["boolean", ["feature-state", "selected"], false],
+                        0.99,
+                        0.4,
+                    ],
                 }
-            });
+            }, beforeLayerId);
 
             m.addLayer({
                 id: this.outlineLayerId,
@@ -122,13 +155,8 @@ export class HexagonMesh {
                     'line-color': '#000000',
                     'line-width': 1,
                 },
-            });
+            }, beforeLayerId);
         }
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onClicked(callback: (hexId: number, properties?: any) => void) {
-        if (!this.map) return;
 
         const mouseMoveListener = (e: maplibregl.MapMouseEvent & { features?: MapGeoJSONFeature[]; }) => {
             if (e.features && e.features.length > 0) {
@@ -176,31 +204,23 @@ export class HexagonMesh {
 
         // Reset cursor when leaving layer
         this.map.on('mouseleave', this.fillerLayerId, mouseLeaveListener);
-        const clickListener = (e: maplibregl.MapMouseEvent & { features?: MapGeoJSONFeature[]; }) => {
-            if (e.features && e.features.length > 0) {
-                const feature = e.features[0]!;
 
-                if (callback) {
-                    const hexId = feature.properties?.hex_id;
-                    if (hexId !== undefined) {
-                        callback(hexId, feature.properties);
-                    }
-                }
-            }
-        }
-
-        // Click handler
-        this.map.on('click', this.fillerLayerId, clickListener);
 
         const cleanup = () => {
             this.map!.off('mousemove', this.fillerLayerId, mouseMoveListener);
             this.map!.off('mouseleave', this.fillerLayerId, mouseLeaveListener);
-            this.map!.off('click', this.fillerLayerId, clickListener);
         };
 
         this.cleanup.push(cleanup);
 
         return cleanup;
+    }
+
+    shouldCaptureClick(features: MapGeoJSONFeature[]): number | false {
+        if (features && features.length > 0) {
+            return features.some(f => f.layer.id === this.fillerLayerId) ? features[0]?.properties?.hex_id : false;
+        }
+        return false;
     }
 
     removeFromMap() {

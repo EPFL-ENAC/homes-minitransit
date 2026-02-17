@@ -3,21 +3,6 @@ import { defineStore } from "pinia";
 import proj4 from "proj4";
 import { KeyedAsyncCache, Result } from "unwrapped/core";
 import { fetchJSON } from "./utils";
-import type { TransitSystemDesign } from "src/lib/designs/transitSystemDesign";
-
-export type GameAreaMode = "origin" | "destination";
-
-export interface GameState {
-    areaId: string;
-    hour: number;
-    showDemand: boolean;
-    mode: GameAreaMode;
-    design: TransitSystemDesign | null;
-    shownServices: Set<string>;
-    simulationId: string | null;
-    pickedHexId: number | null;
-    pickedServiceName: string | null;
-}
 
 export type HexagonGeoJSON = GeoJSON.FeatureCollection<Geometry & { coordinates: [number, number][][] }>;
 

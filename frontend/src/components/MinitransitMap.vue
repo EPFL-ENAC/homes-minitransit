@@ -12,11 +12,11 @@ import {
 import { onMounted, useTemplateRef } from 'vue';
 import { useLazyAction, useAsyncResultCollection } from 'unwrapped/vue';
 import { AsyncResult, Result } from 'unwrapped/core';
-import { useGameAreasStore, type GameState } from 'src/stores/gameAreasStore';
-import { type SimulationRoute, useSimulationsStore } from 'src/stores/simulation';
+import { useGameAreasStore } from 'src/stores/gameAreasStore';
 import { HexagonMesh } from 'src/lib/designs/hexagons/hexagonMesh';
 import { RoutesMesh } from 'src/lib/designs/routes/routes';
-import { useGameStateStore } from 'src/stores/gameState';
+import { useGameStateStore, type GameState } from 'src/stores/gameState';
+import { makeSimulationRoutesGroupId } from 'src/stores/simulation';
 
 interface Props {
     style?: string | StyleSpecification | undefined;
@@ -26,7 +26,6 @@ interface Props {
 const props = defineProps<Props>();
 
 const gameAreaStore = useGameAreasStore();
-const simulationsStore = useSimulationsStore();
 const gameStateStore = useGameStateStore();
 
 const { resultRef: map, trigger: loadMap } = useLazyAction<Map>(() => {
@@ -63,11 +62,41 @@ const hexagons = new HexagonMesh();
 const routes = new RoutesMesh();
 
 function postLoad(m: Map) {
-    hexagons.drawOnMap(m);
-    hexagons.onClicked((hexId) => {
-        gameStateStore.updateState({ pickedHexId: hexId });
+    m.addLayer({
+        id: 'background-end',
+        type: 'background',
+        layout: { visibility: 'none' }
     });
-    routes.drawOnMap(m);
+    m.addLayer({
+        id: 'services-end',
+        type: 'background',
+        layout: { visibility: 'none' }
+    });
+    m.addLayer({
+        id: 'routes-end',
+        type: 'background',
+        layout: { visibility: 'none' }
+    });
+
+    hexagons.drawOnMap(m, 'background-end');
+    routes.drawOnMap(m, 'routes-end');
+
+    m.on('click', (e) => {
+        return tasks.value.add(`click-${crypto.randomUUID()}`, AsyncResult.run(function* () {
+            const state = yield* gameStateStore.gameState;
+            
+            const features = m.queryRenderedFeatures(e.point);
+            const serviceName = state.design?.shouldCaptureClick(features);
+            if (serviceName) {
+                return yield* gameStateStore.updateState({ pickedServiceName: serviceName });
+            }
+
+            const hexFeature = hexagons.shouldCaptureClick(features);
+            if (hexFeature) {
+                return yield* gameStateStore.pickHexagon(hexFeature);
+            }
+        }));
+    });
 }
 
 function updateState(newStateResult: AsyncResult<GameState>, oldState: GameState | undefined) {
@@ -100,12 +129,11 @@ function updateState(newStateResult: AsyncResult<GameState>, oldState: GameState
         }
 
         hexagons.setDemandKey(demandKey, newState.showDemand);
+        hexagons.setSelectedHexagon(newState.pickedHexId);
 
         if (newState.design) {
             if (newState.design !== oldState?.design) {
-                newState.design.drawOnMap(m, hexagons, (service) => {
-                    gameStateStore.updateState({ pickedServiceName: service.name });
-                });
+                newState.design.drawOnMap(m, hexagons, 'services-end');
             }
             newState.design.selectService(newState.pickedServiceName || null);
             newState.design.setVisibleServices(newState.shownServices);
@@ -113,37 +141,8 @@ function updateState(newStateResult: AsyncResult<GameState>, oldState: GameState
             oldState.design.removeFromMap();
         }
 
-        const simulationId = newState.simulationId;
-        if (!simulationId) {
-            routes.setRoutes([], hexagons, newState.design);
-            return;
-        }
-
-        yield* simulationsStore.getSimulationResult({
-            simulationId: simulationId,
-        });
-
-        let simulatedRoutes: SimulationRoute[] = [];
-
-        if (newState.pickedHexId) {
-            simulatedRoutes = yield* simulationsStore.getSimulationRoute(
-                newState.mode === "origin" ? {
-                    simulationParams: {
-                        simulationId: simulationId,
-                    },
-                    type: "out",
-                    startHexId: newState.pickedHexId
-                } : {
-                    simulationParams: {
-                        simulationId: simulationId,
-                    },
-                    type: "in",
-                    endHexId: newState.pickedHexId
-                }
-            );
-        }
-
-        routes.setRoutes(simulatedRoutes, hexagons, newState.design);
+        const simulationRoutesGroups = (newState.simulationRoutesGroups ?? []).filter(group => newState.shownRoutes.has(makeSimulationRoutesGroupId(group)));
+        routes.setRoutes(simulationRoutesGroups.flatMap(g => g.routes), hexagons, newState.design);
     }));
 }
 

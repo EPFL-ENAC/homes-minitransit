@@ -26,8 +26,9 @@ export class OnDemandFreeFloatingService extends BaseDesignService<OnDemandServi
         return this.serviceData;
     }
 
-    override drawOnMap(m: MaplibreMap, hexagons: HexagonMesh, color: string = "#FF0000") {
-        super.drawOnMap(m, hexagons, color);
+    override drawOnMap(m: MaplibreMap, hexagons: HexagonMesh, beforeLayerId?: string) {
+        const cleanUp = super.drawOnMap(m, hexagons, beforeLayerId);
+        return cleanUp;
         /* const hexagonsSource = m.getSource<GeoJSONSource>(hexagonsSourceId);
         if (!hexagonsSource) {
             console.warn(`Hexagons source ${hexagonsSourceId} not found`);
@@ -75,7 +76,7 @@ export class OnDemandFreeFloatingService extends BaseDesignService<OnDemandServi
                 ],
                 "circle-color": color,
             }
-        }); */
+        }, beforeLayerId); */
     }
 
     override setVisualState(state: DesignVisualState) {

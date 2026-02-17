@@ -1,8 +1,11 @@
-import type { GeoJSONSource, Map as MaplibreMap } from "maplibre-gl";
+import type { DataDrivenPropertyValueSpecification, GeoJSONSource, Map as MaplibreMap } from "maplibre-gl";
 import { lngLatOffsetToHexagonCenter } from "src/lib/designs/hexagons/hexagonsUtils";
 import type { RideAction, SimulationRoute, WalkAction } from "src/stores/simulation";
 import type { HexagonMesh } from "../hexagons/hexagonMesh";
 import type { TransitSystemDesign } from "../transitSystemDesign";
+
+// const colorsFromActionType: DataDrivenPropertyValueSpecification<string> = ["match", ["get", "actionType"], "Ride", "#FF00FF", "Walk", "#00FF00", "#CCCCCC"];
+const colorsFromActionType: DataDrivenPropertyValueSpecification<string> = "#000000"; // For now, let's just use the same color for everything to avoid confusion with the design colors. We can always add more colors later if needed.
 
 export class RoutesMesh {
     private uuid = crypto.randomUUID();
@@ -22,6 +25,10 @@ export class RoutesMesh {
         return `route-mesh-arrows-${this.uuid}`;
     }
 
+    get pointsLayerId() {
+        return `route-points-${this.uuid}`;
+    }
+
     setRoutes(routes: SimulationRoute[], hexagons: HexagonMesh, design: TransitSystemDesign | null) {
         this.routes = routes;
         if (this.source) {
@@ -31,6 +38,10 @@ export class RoutesMesh {
 
     private generateGeoJSON(hexagons: HexagonMesh, design: TransitSystemDesign | null): GeoJSON.FeatureCollection<GeoJSON.Geometry> {
         const features: GeoJSON.Feature<GeoJSON.Geometry>[] = [];
+
+        if (this.routes.length > 0) {
+            features.push(this.generateStartGeoJSON(hexagons));
+        }
 
         for (const route of this.routes) {
             for (const action of route.actions) {
@@ -49,6 +60,17 @@ export class RoutesMesh {
         return {
             type: "FeatureCollection",
             features,
+        };
+    }
+
+    private generateStartGeoJSON(hexagons: HexagonMesh): GeoJSON.Feature<GeoJSON.Geometry> {
+        return {
+            type: "Feature",
+            properties: { actionType: "start", kind: "point" },
+            geometry: {
+                type: "Point",
+                coordinates: hexagons.getCoordinatesOfIds([this.routes[0]!.actions[0]!.start_hex], lngLatOffsetToHexagonCenter)[0]!,
+            },
         };
     }
 
@@ -140,7 +162,7 @@ export class RoutesMesh {
         return (Math.atan2(end[1] - start[1], end[0] - start[0]) * 180) / Math.PI * -1 + 90;
     }
 
-    drawOnMap(m: MaplibreMap) {
+    drawOnMap(m: MaplibreMap, beforeLayerId?: string) {
         this.map = m;
 
         if (!m.getSource(this.sourceId)) {
@@ -152,16 +174,29 @@ export class RoutesMesh {
             this.source = m.getSource(this.sourceId) as GeoJSONSource;
 
             m.addLayer({
+                id: this.pointsLayerId,
+                type: "circle",
+                source: this.sourceId,
+                filter: ["==", ["get", "kind"], "point"], // Only draw point features
+                paint: {
+                    "circle-radius": ["interpolate", ["linear"], ["zoom"], 5, 4, 14, 10],
+                    "circle-color": colorsFromActionType,
+                    "circle-stroke-color": "#FFFFFF",
+                    "circle-stroke-width": 1,
+                },
+            }, beforeLayerId);
+
+            m.addLayer({
                 id: this.lineLayerId,
                 type: "line",
                 source: this.sourceId,
                 filter: ["==", ["get", "kind"], "line"], // Only draw line features
                 layout: { "line-join": "round", "line-cap": "round" },
                 paint: {
-                    "line-color": ["match", ["get", "actionType"], "Ride", "#FF00FF", "Walk", "#00FF00", "#CCCCCC"],
-                    "line-width": ["interpolate", ["linear"], ["zoom"], 5, 1, 14, 6]
+                    "line-color": colorsFromActionType,
+                    "line-width": ["interpolate", ["linear"], ["zoom"], 5, 1, 14, 6],
                 },
-            });
+            }, beforeLayerId);
 
             m.addLayer({
                 id: this.arrowLayerId,
@@ -181,9 +216,9 @@ export class RoutesMesh {
                     "text-padding": 0,
                 },
                 paint: {
-                    "text-color": ["match", ["get", "actionType"], "Ride", "#FF00FF", "Walk", "#00FF00", "#CCCCCC"],
+                    "text-color": colorsFromActionType,
                 },
-            });
+            }, beforeLayerId);
         }
     }
 

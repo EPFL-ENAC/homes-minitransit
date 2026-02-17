@@ -131,7 +131,7 @@ const debounced = gameStateStore.gameState.toDebounced(100);
         
                 <q-expansion-item v-if="currentRoutes.unwrapOrNull()" label="Routes" header-class="text-h6" v-model="routesPanelOpen">
                     <div class="q-px-md q-pb-md">
-                        <routes-inspector :routes="currentRoutes.unwrapOrNull()!" :hex-id="state.pickedHexId!" :mode="state.mode" />
+                        <routes-inspector :routes="currentRoutes.unwrapOrNull()!" :hex-id="state.pickedHexId!" :mode="state.mode" :shown-routes="state.shownRoutes" />
                     </div>
                 </q-expansion-item>
 

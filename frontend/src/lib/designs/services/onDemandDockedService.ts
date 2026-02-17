@@ -31,8 +31,9 @@ export class OnDemandDockedService extends BaseDesignService<OnDemandServiceJSON
         return this.serviceData;
     }
 
-    override drawOnMap(m: MaplibreMap, hexagons: HexagonMesh, color: string = "#FF0000") {
-        super.drawOnMap(m, hexagons, color);
+    override drawOnMap(m: MaplibreMap, hexagons: HexagonMesh, beforeLayerId?: string) {
+        const cleanUp = super.drawOnMap(m, hexagons, beforeLayerId);
+        const color = `hsl(${this.hue}, 100%, 50%)`;
 
         const coordsFromHexagons = hexagons.getCoordinatesOfIds(this.onDemandService.docking_stations.map(ds => ds.location));
 
@@ -74,7 +75,8 @@ export class OnDemandDockedService extends BaseDesignService<OnDemandServiceJSON
                 ],
                 "circle-color": color,
             }
-        });
+        }, beforeLayerId);
+        return cleanUp;
     }
 
     override setVisualState(state: DesignVisualState) {

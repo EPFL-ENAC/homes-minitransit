@@ -1,8 +1,7 @@
 import type { HexagonMesh } from "./hexagons/hexagonMesh";
 import { type DesignService, FixedRouteService, OnDemandDockedService, OnDemandFreeFloatingService, type ServiceHexagonInfo } from "./services";
-import type { BaseDesignService } from "./services/base";
 import type { TransitSystemDesignJSON } from "./types";
-import type { Map as MaplibreMap } from 'maplibre-gl';
+import type { MapGeoJSONFeature, Map as MaplibreMap } from 'maplibre-gl';
 
 export class TransitSystemDesign {
     fixedRouteServices: FixedRouteService[] = [];
@@ -34,6 +33,11 @@ export class TransitSystemDesign {
             .filter(ods => ods.type === "free-floating")
             .map(ods => OnDemandFreeFloatingService.fromJSON(ods));
 
+        design.services.forEach((service, index) => {
+            const hue = (index * 360) / design.services.length;
+            service.hue = hue;
+        });
+
         return design;
     }
 
@@ -47,20 +51,14 @@ export class TransitSystemDesign {
         }
     }
 
-    drawOnMap(m: MaplibreMap, hexagons: HexagonMesh, onServiceClicked?: (service: DesignService) => void) {
+    drawOnMap(m: MaplibreMap, hexagons: HexagonMesh, beforeLayerId?: string) {
         this.removeFromMap();
         this.map = m;
 
-        const designColors = ["#FF0000", "#0000FF", "#00FF00", "#FFA500", "#800080", "#00FFFF", "#FFC0CB", "#808000"];
-
         for (let i = 0; i < this.services.length; i++) {
             const service = this.services[i]!;
-            const color = designColors[i % designColors.length];
 
-            service.drawOnMap(this.map, hexagons, color);
-            if (onServiceClicked) {
-                service.onClicked(this.map, onServiceClicked as (service: BaseDesignService<object>) => void);
-            }
+            service.drawOnMap(this.map, hexagons, beforeLayerId);
         }
     }
 
@@ -93,5 +91,14 @@ export class TransitSystemDesign {
         }
 
         return info;
+    }
+
+    shouldCaptureClick(features: MapGeoJSONFeature[]): string | false {
+        for (const service of this.services) {
+            if (service.shouldCaptureClick(features)) {
+                return service.name;
+            }
+        }
+        return false;
     }
 }
