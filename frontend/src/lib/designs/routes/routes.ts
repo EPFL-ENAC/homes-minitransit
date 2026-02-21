@@ -1,6 +1,6 @@
 import type { DataDrivenPropertyValueSpecification, GeoJSONSource, Map as MaplibreMap } from "maplibre-gl";
 import { lngLatOffsetToHexagonCenter } from "src/lib/designs/hexagons/hexagonsUtils";
-import type { RideAction, SimulationRoute, WalkAction } from "src/stores/simulation";
+import type { RideAction, SimulationActionType, SimulationRoute, WalkAction } from "src/stores/simulation";
 import type { HexagonMesh } from "../hexagons/hexagonMesh";
 import type { TransitSystemDesign } from "../transitSystemDesign";
 
@@ -44,17 +44,17 @@ export class RoutesMesh {
         }
 
         for (const route of this.routes) {
-            for (const action of route.actions) {
+            route.actions.forEach((action, i) => {
                 if (action.type === "Walk") {
-                    const walkGeoJSON = this.generateWalkGeoJSON(action, hexagons);
+                    const walkGeoJSON = this.generateWalkGeoJSON(action, hexagons, i === route.actions.length - 1);
                     features.push(...walkGeoJSON.features);
                 } else if (action.type === "Ride" && design) {
-                    const rideGeoJSON = this.generateRideGeoJSON(action, hexagons, design);
+                    const rideGeoJSON = this.generateRideGeoJSON(action, hexagons, design, i === route.actions.length - 1);
                     features.push(...rideGeoJSON.features);
                 } else if (action.type === "Wait") {
                     // We could also visualize waiting, but for now let's skip it since it's less critical to show on the map
                 }
-            }
+            });
         }
 
         return {
@@ -74,31 +74,27 @@ export class RoutesMesh {
         };
     }
 
-    private generateWalkGeoJSON(action: WalkAction, hexagons: HexagonMesh): GeoJSON.FeatureCollection<GeoJSON.Geometry> {
+    private generateWalkGeoJSON(action: WalkAction, hexagons: HexagonMesh, addTip: boolean): GeoJSON.FeatureCollection<GeoJSON.Geometry> {
         const coords = hexagons.getCoordinatesOfIds(
             action.walk_path,
             lngLatOffsetToHexagonCenter,
         );
 
         if (coords.length >= 2) {
+            const features: GeoJSON.Feature<GeoJSON.Geometry>[] = [
+                {
+                    type: "Feature",
+                    properties: { actionType: action.type, kind: "line" },
+                    geometry: { type: "LineString", coordinates: coords },
+                }
+            ];
+            if (addTip) {
+                features.push(this.generateArrowTipGeoJSONFeature(coords, action.type));
+            }
+
             return {
                 type: "FeatureCollection",
-                features: [
-                    {
-                        type: "Feature",
-                        properties: { actionType: action.type, kind: "line" },
-                        geometry: { type: "LineString", coordinates: coords },
-                    },
-                    {
-                        type: "Feature",
-                        properties: {
-                            actionType: action.type,
-                            kind: "tip",
-                            angle: this.calculateAngle(coords.at(-2)!, coords.at(-1)!),
-                        },
-                        geometry: { type: "Point", coordinates: coords.at(-1)! },
-                    },
-                ],
+                features,
             };
         }
 
@@ -108,7 +104,7 @@ export class RoutesMesh {
         };
     }
 
-    private generateRideGeoJSON(action: RideAction, hexagons: HexagonMesh, design: TransitSystemDesign): GeoJSON.FeatureCollection<GeoJSON.Geometry> {
+    private generateRideGeoJSON(action: RideAction, hexagons: HexagonMesh, design: TransitSystemDesign, addTip: boolean): GeoJSON.FeatureCollection<GeoJSON.Geometry> {
         const service = design.fixedRouteServices.find(s => s.name === action.service_name)?.toJSON();
         if (!service) {
             console.warn(`Service ${action.service_name} not found in design`);
@@ -131,30 +127,38 @@ export class RoutesMesh {
         );
 
         if (coords.length >= 2) {
+            const features: GeoJSON.Feature<GeoJSON.Geometry>[] = [
+                {
+                    type: "Feature",
+                    properties: { actionType: action.type, kind: "line" },
+                    geometry: { type: "LineString", coordinates: coords },
+                }
+            ];
+            if (addTip) {
+                features.push(this.generateArrowTipGeoJSONFeature(coords, action.type));
+            }
+
             return {
                 type: "FeatureCollection",
-                features: [
-                    {
-                        type: "Feature",
-                        properties: { actionType: action.type, kind: "line" },
-                        geometry: { type: "LineString", coordinates: coords },
-                    },
-                    {
-                        type: "Feature",
-                        properties: {
-                            actionType: action.type,
-                            kind: "tip",
-                            angle: this.calculateAngle(coords.at(-2)!, coords.at(-1)!),
-                        },
-                        geometry: { type: "Point", coordinates: coords.at(-1)! },
-                    },
-                ],
+                features,
             };
         }
 
         return {
             type: "FeatureCollection",
             features: [],
+        };
+    }
+
+    private generateArrowTipGeoJSONFeature(coords: [number, number][], actionType: SimulationActionType): GeoJSON.Feature {
+        return {
+            type: "Feature",
+            properties: {
+                actionType: actionType,
+                kind: "tip",
+                angle: this.calculateAngle(coords.at(-2)!, coords.at(-1)!),
+            },
+            geometry: { type: "Point", coordinates: coords.at(-1)! },
         };
     }
 
@@ -194,7 +198,7 @@ export class RoutesMesh {
                 layout: { "line-join": "round", "line-cap": "round" },
                 paint: {
                     "line-color": colorsFromActionType,
-                    "line-width": ["interpolate", ["linear"], ["zoom"], 5, 1, 14, 6],
+                    "line-width": ["interpolate", ["linear"], ["zoom"], 5, 1, 14, 4],
                 },
             }, beforeLayerId);
 
