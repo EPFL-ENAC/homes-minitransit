@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { makeAsyncResultLoader, useReactiveGenerator } from "unwrapped/vue";
 import { type LocationQuery, useRoute, useRouter } from "vue-router";
 import { CompressedDecompressedPair, compressToURL, decompressFromURL } from "src/lib/utils/compression";
-import { AsyncResult, delay } from "unwrapped/core";
+import { AsyncResult } from "unwrapped/core";
 import { TransitSystemDesign } from "src/lib/designs/transitSystemDesign";
 import type { TransitSystemDesignJSON } from "src/lib/designs/types";
 import { makeSimulationRoutesGroupId, type SimulationRouteParams, useSimulationsStore } from "./simulation";
