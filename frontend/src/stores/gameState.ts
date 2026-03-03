@@ -78,7 +78,6 @@ export const useGameStateStore = defineStore("gameState", () => {
         const pickedHexId = query.pickedHexId ? parseInt(query.pickedHexId as string) : null;
 
         const design = yield* AsyncResult.fromValuePromise(designPair.decompressIfNeeded(query.designCompressed as string | null));
-        yield* delay(5000);
 
         let simulationRoutesGroups: SimulationRouteGroup[] | null = null;
         const simulationRoutesParams = gameStatePartsToSimulationRouteParams(mode, simulationId, pickedHexId);
