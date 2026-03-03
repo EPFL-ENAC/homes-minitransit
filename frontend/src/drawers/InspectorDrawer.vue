@@ -155,6 +155,11 @@ const debounced = gameStateStore.gameState.toDebounced(100);
                     </div>
                 </q-expansion-item>
             </template>
+            <template #loading>
+                <div class="row items-center justify-center q-pa-md q-mt-md">
+                    <q-spinner color="primary" size="50px" />
+                </div>
+            </template>
         </game-state-loader>
     </q-scroll-area>
 </template>

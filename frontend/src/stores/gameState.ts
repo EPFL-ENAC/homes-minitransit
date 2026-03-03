@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { makeAsyncResultLoader, useReactiveGenerator } from "unwrapped/vue";
 import { type LocationQuery, useRoute, useRouter } from "vue-router";
 import { CompressedDecompressedPair, compressToURL, decompressFromURL } from "src/lib/utils/compression";
-import { AsyncResult } from "unwrapped/core";
+import { AsyncResult, delay } from "unwrapped/core";
 import { TransitSystemDesign } from "src/lib/designs/transitSystemDesign";
 import type { TransitSystemDesignJSON } from "src/lib/designs/types";
 import { makeSimulationRoutesGroupId, type SimulationRouteParams, useSimulationsStore } from "./simulation";
@@ -78,12 +78,17 @@ export const useGameStateStore = defineStore("gameState", () => {
         const pickedHexId = query.pickedHexId ? parseInt(query.pickedHexId as string) : null;
 
         const design = yield* AsyncResult.fromValuePromise(designPair.decompressIfNeeded(query.designCompressed as string | null));
+        yield* delay(5000);
 
         let simulationRoutesGroups: SimulationRouteGroup[] | null = null;
         const simulationRoutesParams = gameStatePartsToSimulationRouteParams(mode, simulationId, pickedHexId);
         if (simulationRoutesParams) {
             const simulationRoutes = yield* simulationsStore.getSimulationRoute(simulationRoutesParams);
             simulationRoutesGroups = computeUniquePaths(simulationRoutes, mode, pickedHexId ?? -1);
+        } else if (simulationId) {
+            yield* simulationsStore.getSimulationResult({
+                simulationId
+            }); // Wait for the simulation result to be loaded even if we don't show routes to show a loading state
         }
 
         return {
@@ -113,7 +118,7 @@ export const useGameStateStore = defineStore("gameState", () => {
                 query.designCompressed = compressed;
             } else if (value instanceof Set) {
                 query[key] = Array.from(value).join(";");
-            } else {
+            } else if (key !== "simulationRoutesGroups") { // This is not needed in the URL as it's derived from other state parts
                 query[key] = String(value);
             }
         }
@@ -121,25 +126,20 @@ export const useGameStateStore = defineStore("gameState", () => {
     }
 
     function updateStateInternal(newState: Partial<GameState>) {
-        console.log("updateStateInternal", newState)
         return AsyncResult.run(function* () {
             const currentState = yield* gameState.value;
 
-            console.log("updateStateInternal 2", newState)
             const updatedState: GameState = {
                 ...currentState,
                 ...newState,
             };
-            console.log("updatedState", updatedState)
             const query = yield* AsyncResult.fromValuePromise(stateToQuery(updatedState));
-            console.log("query", query)
 
             return yield* AsyncResult.fromValuePromise(router.push({ query }));
         });
     }
 
     function updateState(newState: Partial<Omit<GameState, "design" | "simulationRoutesGroups" | "pickedHexId">>) {
-        console.log("updateState", newState)
         return updateStateInternal(newState);
     }
 

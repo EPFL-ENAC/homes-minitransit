@@ -124,7 +124,7 @@ const debounced = gameStateStore.gameState.toDebounced(100);
                 </div>
             </template>
             <template #loading>
-                <div class="row items-center justify-center q-pa-md">
+                <div class="row items-center justify-center q-pa-md q-pt-xl q-mt-xl">
                     <q-spinner color="primary" size="50px" />
                 </div>
             </template>
