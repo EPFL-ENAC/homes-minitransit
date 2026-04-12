@@ -34,6 +34,11 @@ const props = defineProps<{
                 <td>Speed (hex per min)</td>
                 <td class="text-right">{{ props.service.fixedRouteService.travel_time }}</td>
             </tr>
+            <tr>
+                <td>Base fare</td>
+                <td class="text-right">{{ props.service.fixedRouteService.base_fare ?? '2.4 (default)' }}</td>
+                <!-- IMPORTANT: needs to be in sync with simulation_config.json in the backend -->
+            </tr>
         </template>
         <template v-else-if="(props.service instanceof OnDemandDockedService)">
             <tr>
@@ -55,6 +60,16 @@ const props = defineProps<{
             <tr>
                 <td>Total dock capacity</td>
                 <td class="text-right">{{ props.service.onDemandService.docking_stations.reduce((sum, station) => sum + station.capacity, 0) }}</td>
+            </tr>
+            <tr>
+                <td>Speed (hex per min, fixed)</td>
+                <td class="text-right">12</td>
+                <!-- IMPORTANT: needs to be in sync with simulation_config.json in the backend -->
+            </tr>
+            <tr>
+                <td>Base fare</td>
+                <td class="text-right">{{ props.service.onDemandService.base_fare ?? '3 (default)' }}</td>
+                <!-- IMPORTANT: needs to be in sync with simulation_config.json in the backend -->
             </tr>
         </template>
     </tbody>
