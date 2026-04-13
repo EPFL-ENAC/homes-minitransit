@@ -6,6 +6,7 @@ export interface FixedRouteServiceJSON {
     capacity: number;
     stopping_time: number; // in minutes ?
     travel_time: number; // in minutes ?
+    base_fare?: number;
 }
 
 export interface OnDemandServiceJSON {
@@ -14,6 +15,7 @@ export interface OnDemandServiceJSON {
     capacity: number;
     vehicles: Vehicle[];
     docking_stations: DockingStation[];
+    base_fare?: number;
 }
 
 export interface Vehicle {
