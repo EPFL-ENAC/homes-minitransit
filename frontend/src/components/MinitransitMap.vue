@@ -141,6 +141,7 @@ function updateState(newStateResult: AsyncResult<GameState>, oldState: GameState
             oldState.design.removeFromMap();
         }
 
+
         const simulationRoutesGroups = (newState.simulationRoutesGroups ?? []).filter(group => newState.shownRoutes.has(makeSimulationRoutesGroupId(group)));
         routes.setRoutes(simulationRoutesGroups.flatMap(g => g.routes), hexagons, newState.design);
     }));

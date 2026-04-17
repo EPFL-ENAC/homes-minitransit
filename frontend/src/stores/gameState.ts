@@ -76,13 +76,15 @@ export const useGameStateStore = defineStore("gameState", () => {
         const mode = (query.mode ?? "origin") as GameAreaMode;
         const simulationId = query.simulationId as string || null;
         const pickedHexId = query.pickedHexId ? parseInt(query.pickedHexId as string) : null;
+        const hour = getHour(query.hour as string | undefined);
 
         const design = yield* AsyncResult.fromValuePromise(designPair.decompressIfNeeded(query.designCompressed as string | null));
 
         let simulationRoutesGroups: SimulationRouteGroup[] | null = null;
         const simulationRoutesParams = gameStatePartsToSimulationRouteParams(mode, simulationId, pickedHexId);
         if (simulationRoutesParams) {
-            const simulationRoutes = yield* simulationsStore.getSimulationRoute(simulationRoutesParams);
+            const simulationRoutes = yield* simulationsStore.getSimulationRoute(simulationRoutesParams, hour);
+            console.log(simulationRoutes)
             simulationRoutesGroups = computeUniquePaths(simulationRoutes, mode, pickedHexId ?? -1);
         } else if (simulationId) {
             yield* simulationsStore.getSimulationResult({
@@ -93,7 +95,7 @@ export const useGameStateStore = defineStore("gameState", () => {
         return {
             areaId: "Lausanne", // Hardcode lausanne now as the project of having Renens was scrapped // query.areaId as string | undefined,
             showDemand: query.showDemand !== "false", // default to true if not specified
-            hour: getHour(query.hour as string | undefined),
+            hour,
             mode,
             design,
             shownServices: new Set(decodeURIComponent(query.shownServices as string).split(";")),
@@ -180,13 +182,32 @@ export const useGameStateStore = defineStore("gameState", () => {
             if (state.simulationId && hexId !== null) {
                 const simulationRoutesParams = gameStatePartsToSimulationRouteParams(state.mode, state.simulationId, hexId);
                 if (simulationRoutesParams) {
-                    const routes = yield* simulationsStore.getSimulationRoute(simulationRoutesParams);
+                    const routes = yield* simulationsStore.getSimulationRoute(simulationRoutesParams, state.hour);
                     const groups = computeUniquePaths(routes, state.mode, hexId);
                     shownRoutesIds = new Set(groups.map(makeSimulationRoutesGroupId));
                 }
             }
 
             return yield* updateStateInternal({ pickedHexId: hexId, shownRoutes: shownRoutesIds });
+        });
+    }
+
+    function setHour(hour: number) {
+        return AsyncResult.run(function* () {
+            const state = yield* gameState.value;
+
+            // We need to recompute which routes are to be shown to re-activate all the routes groups
+            let shownRoutesIds = new Set<string>();
+            if (state.simulationId && state.pickedHexId !== null) {
+                const simulationRoutesParams = gameStatePartsToSimulationRouteParams(state.mode, state.simulationId, state.pickedHexId);
+                if (simulationRoutesParams) {
+                    const routes = yield* simulationsStore.getSimulationRoute(simulationRoutesParams, state.hour);
+                    const groups = computeUniquePaths(routes, state.mode, state.pickedHexId);
+                    shownRoutesIds = new Set(groups.map(makeSimulationRoutesGroupId));
+                }
+            }
+
+            return yield* updateStateInternal({ hour, shownRoutes: shownRoutesIds });
         });
     }
 
@@ -217,6 +238,7 @@ export const useGameStateStore = defineStore("gameState", () => {
         updateDesignFromFile,
         showService,
         pickHexagon,
+        setHour,
         showRoute,
         showAllRoutes,
     }

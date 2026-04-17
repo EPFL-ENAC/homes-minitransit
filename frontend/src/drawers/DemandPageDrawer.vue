@@ -25,8 +25,10 @@ const { resultRef: simulationId, trigger: runSimulation } = useLazyGenerator(fun
     
     const simulationId = yield* AsyncResult.fromValuePromise(simulationsStore.runSimulation({
         area_id: state.areaId,
+        // We only use these hardcoded hours
         input_params: {
-            hour: state.hour,
+            start_hour: 7,
+            end_hour: 19
         },
         services: state.design ? {
             fixed_route_services: state.design.fixedRouteServices.map(service => service.toJSON()),
@@ -89,7 +91,7 @@ const debounced = gameStateStore.gameState.toDebounced(100);
                         <div class="text-subtitle1">Hour of the day</div>
                         <q-slider
                             :model-value="gameState.hour"
-                            @update:model-value="(e) => gameStateStore.updateState({ hour: e ?? 0 })"
+                            @update:model-value="(e) => gameStateStore.setHour(e ?? 0)"
                             :min="0"
                             :max="23"
                             label

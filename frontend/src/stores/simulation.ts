@@ -83,7 +83,8 @@ export type SimulationRouteParams = {
 export type PostRunSimulationBody = {
     area_id: string;
     input_params: {
-        hour: number;
+        start_hour: number;
+        end_hour: number;
     };
     services?: {
         fixed_route_services: FixedRouteServiceJSON[];
@@ -146,11 +147,19 @@ export const useSimulationsStore = defineStore("simulations", () => {
         return simulationResultCache.get(params);
     }
 
-    function getSimulationRoute(params: SimulationRouteParams) {
+    // TODO : cache the result of this as it can be called with the same params multiple times in the same game render pass
+    function getSimulationRoute(params: SimulationRouteParams, hour: number | null = null) {
         return AsyncResult.run(function* () {
             const simulationResult = yield* getSimulationResult(params.simulationParams);
 
             return simulationResult.routes.filter(route => {
+                if (hour !== null) {
+                    const routeStartHour = parseInt(route.actions.at(0)!.start_time.split(":")[0]!);
+                    const routeEndHour = parseInt(route.actions.at(-1)!.end_time.split(":")[0]!);
+
+                    if (hour < routeStartHour || hour > routeEndHour) return false;
+                }
+
                 if (params.type === "out") {
                     return route.actions.at(0)?.start_hex === params.startHexId;
                 } else {
