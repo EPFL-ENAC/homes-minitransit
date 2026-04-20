@@ -84,7 +84,6 @@ export const useGameStateStore = defineStore("gameState", () => {
         const simulationRoutesParams = gameStatePartsToSimulationRouteParams(mode, simulationId, pickedHexId);
         if (simulationRoutesParams) {
             const simulationRoutes = yield* simulationsStore.getSimulationRoute(simulationRoutesParams, hour);
-            console.log(simulationRoutes)
             simulationRoutesGroups = computeUniquePaths(simulationRoutes, mode, pickedHexId ?? -1);
         } else if (simulationId) {
             yield* simulationsStore.getSimulationResult({
@@ -201,7 +200,7 @@ export const useGameStateStore = defineStore("gameState", () => {
             if (state.simulationId && state.pickedHexId !== null) {
                 const simulationRoutesParams = gameStatePartsToSimulationRouteParams(state.mode, state.simulationId, state.pickedHexId);
                 if (simulationRoutesParams) {
-                    const routes = yield* simulationsStore.getSimulationRoute(simulationRoutesParams, state.hour);
+                    const routes = yield* simulationsStore.getSimulationRoute(simulationRoutesParams, hour);
                     const groups = computeUniquePaths(routes, state.mode, state.pickedHexId);
                     shownRoutesIds = new Set(groups.map(makeSimulationRoutesGroupId));
                 }
