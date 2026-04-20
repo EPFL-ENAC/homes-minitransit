@@ -75,7 +75,8 @@ const currentRoutes = useAsyncResultRef(gameStateStore.gameState.derivedGenerato
             },
             type: "in",
             endHexId: state.pickedHexId,
-        }
+        },
+        state.hour
     );
 
     return routes;

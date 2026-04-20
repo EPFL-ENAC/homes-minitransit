@@ -40,4 +40,4 @@ test = [
 skip = 'uv.lock'
 
 [tool.uv.sources]
-mini-transit-simulation = { git = "https://github.com/EPFL-HOMES/mini-transit.git", rev = "kaile-optimization" } # temporary, until the PR is merged and a new release is made
+mini-transit-simulation = { git = "https://github.com/EPFL-HOMES/mini-transit.git", rev="main" }
