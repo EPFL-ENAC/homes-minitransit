@@ -1,6 +1,6 @@
 import type { DataDrivenPropertyValueSpecification, GeoJSONSource, Map as MaplibreMap } from "maplibre-gl";
 import { lngLatOffsetToHexagonCenter } from "src/lib/designs/hexagons/hexagonsUtils";
-import type { RideAction, SimulationActionType, SimulationRoute, WalkAction } from "src/stores/simulation";
+import type { OnDemandRideAction, RideAction, SimulationActionType, SimulationRoute, WalkAction } from "src/stores/simulation";
 import type { HexagonMesh } from "../hexagons/hexagonMesh";
 import type { TransitSystemDesign } from "../transitSystemDesign";
 
@@ -51,6 +51,9 @@ export class RoutesMesh {
                 } else if (action.type === "Ride" && design) {
                     const rideGeoJSON = this.generateRideGeoJSON(action, hexagons, design, i === route.actions.length - 1);
                     features.push(...rideGeoJSON.features);
+                } else if (action.type === "OnDemandRide") {
+                    const onDemandRideGeoJSON = this.generateOnDemandRideGeoJSON(action, hexagons, i === route.actions.length - 1);
+                    features.push(...onDemandRideGeoJSON.features);
                 } else if (action.type === "Wait") {
                     // We could also visualize waiting, but for now let's skip it since it's less critical to show on the map
                 }
@@ -77,6 +80,36 @@ export class RoutesMesh {
     private generateWalkGeoJSON(action: WalkAction, hexagons: HexagonMesh, addTip: boolean): GeoJSON.FeatureCollection<GeoJSON.Geometry> {
         const coords = hexagons.getCoordinatesOfIds(
             action.walk_path,
+            lngLatOffsetToHexagonCenter,
+        );
+
+        if (coords.length >= 2) {
+            const features: GeoJSON.Feature<GeoJSON.Geometry>[] = [
+                {
+                    type: "Feature",
+                    properties: { actionType: action.type, kind: "line" },
+                    geometry: { type: "LineString", coordinates: coords },
+                }
+            ];
+            if (addTip) {
+                features.push(this.generateArrowTipGeoJSONFeature(coords, action.type));
+            }
+
+            return {
+                type: "FeatureCollection",
+                features,
+            };
+        }
+
+        return {
+            type: "FeatureCollection",
+            features: [],
+        };
+    }
+
+    private generateOnDemandRideGeoJSON(action: OnDemandRideAction, hexagons: HexagonMesh, addTip: boolean): GeoJSON.FeatureCollection<GeoJSON.Geometry> {
+        const coords = hexagons.getCoordinatesOfIds(
+            action.ride_path,
             lngLatOffsetToHexagonCenter,
         );
 

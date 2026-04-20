@@ -40,4 +40,4 @@ test = [
 skip = 'uv.lock'
 
 [tool.uv.sources]
-mini-transit-simulation = { git = "https://github.com/EPFL-HOMES/mini-transit.git" }
+mini-transit-simulation = { git = "https://github.com/EPFL-HOMES/mini-transit.git", rev="main" }

@@ -63,7 +63,13 @@ export interface RideAction extends SimulationActionBase {
     service_name: string;
 }
 
-export type SimulationAction = WalkAction | WaitAction | RideAction;
+export interface OnDemandRideAction extends SimulationActionBase {
+    type: "OnDemandRide";
+    service_name: string;
+    ride_path: number[]; // List of hex IDs representing the path taken while riding
+}
+
+export type SimulationAction = WalkAction | WaitAction | RideAction | OnDemandRideAction;
 export type SimulationActionType = SimulationAction["type"];
 
 export interface SimulationParams {
@@ -154,10 +160,9 @@ export const useSimulationsStore = defineStore("simulations", () => {
 
             return simulationResult.routes.filter(route => {
                 if (hour !== null) {
-                    const routeStartHour = parseInt(route.actions.at(0)!.start_time.split(":")[0]!);
-                    const routeEndHour = parseInt(route.actions.at(-1)!.end_time.split(":")[0]!);
+                    const routeStartHour = parseInt(route.actions.at(0)!.start_time.split(":")[0]!); 
 
-                    if (hour < routeStartHour || hour > routeEndHour) return false;
+                    if (routeStartHour !== hour) return false;
                 }
 
                 if (params.type === "out") {
