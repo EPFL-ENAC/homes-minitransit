@@ -94,7 +94,7 @@ export type PostRunSimulationBody = {
     };
     services?: {
         fixed_route_services: FixedRouteServiceJSON[];
-        on_demand_services: OnDemandServiceJSON[];
+        ondemand_services: OnDemandServiceJSON[];
     } | undefined;
 };
 

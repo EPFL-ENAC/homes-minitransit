@@ -32,7 +32,7 @@ const { resultRef: simulationId, trigger: runSimulation } = useLazyGenerator(fun
         },
         services: state.design ? {
             fixed_route_services: state.design.fixedRouteServices.map(service => service.toJSON()),
-            on_demand_services: [...state.design.onDemandDockedServices, ...state.design.onDemandFreeFloatingServices].map(service => service.toJSON())
+            ondemand_services: [...state.design.onDemandDockedServices, ...state.design.onDemandFreeFloatingServices].map(service => service.toJSON())
         } : undefined
     }));
     
