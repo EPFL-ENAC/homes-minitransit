@@ -63,7 +63,7 @@ const props = defineProps<{
             </tr>
             <tr>
                 <td>Speed (hex per min, fixed)</td>
-                <td class="text-right">12</td>
+                <td class="text-right">35</td>
                 <!-- IMPORTANT: needs to be in sync with simulation_config.json in the backend -->
             </tr>
             <tr>
