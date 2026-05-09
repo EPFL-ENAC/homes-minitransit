@@ -68,8 +68,15 @@ const props = defineProps<{
             </tr>
             <tr>
                 <td>Base fare</td>
-                <td class="text-right">{{ props.service.onDemandService.base_fare ?? '3 (default)' }}</td>
-                <!-- IMPORTANT: needs to be in sync with simulation_config.json in the backend -->
+                <td class="text-right">{{ props.service.onDemandService.ondemand_base_fare }}</td>
+            </tr>
+            <tr>
+                <td>Base time cutoff (min)</td>
+                <td class="text-right">{{ props.service.onDemandService.ondemand_base_time_cutoff_minutes }}</td>
+            </tr>
+            <tr>
+                <td>Time rate per minute</td>
+                <td class="text-right">{{ props.service.onDemandService.ondemand_time_rate_per_minute }}</td>
             </tr>
         </template>
     </tbody>

@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { useGameAreasStore } from 'src/stores/gameAreasStore';
 import { useSimulationsStore } from 'src/stores/simulation';
-import { useAsyncResultRef } from 'unwrapped/vue';
+import { useAsyncResultRef, useLazyGenerator } from 'unwrapped/vue';
 import { computed, ref } from 'vue';
 import ServiceInspector from 'src/components/ServiceInspector.vue';
 import SimulationInspector from 'src/components/SimulationInspector.vue';
 import HexInspector from 'src/components/HexInspector.vue';
 import RoutesInspector from 'src/components/RoutesInspector.vue';
 import { useGameStateStore, GameStateLoader } from 'src/stores/gameState';
-import { AsyncResult } from 'unwrapped/core';
 
 const gameStateStore = useGameStateStore();
 const simulationsStore = useSimulationsStore();
@@ -84,21 +83,24 @@ const currentRoutes = useAsyncResultRef(gameStateStore.gameState.derivedGenerato
 
 const routesPanelOpen = ref(false);
 
-
-function downloadResults() {
-    return AsyncResult.run(function* () {
-        const simulation = yield* currentSimulation.value;
-        const state = yield* gameStateStore.gameState;
+const { resultRef: downloadingResults, trigger: downloadResults } = useLazyGenerator(function* () {
+    const simulation = yield* currentSimulation.value;
+    const state = yield* gameStateStore.gameState;
     
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(simulation, null, 2));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", `simulation_results_${state.simulationId}.json`);
-        document.body.appendChild(downloadAnchorNode); // required for firefox
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
-    });
-}
+    const jsonString = JSON.stringify(simulation, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", url);
+    downloadAnchorNode.setAttribute("download", `simulation_results_${state.simulationId}.json`);
+    
+    document.body.appendChild(downloadAnchorNode); // required for firefox
+    downloadAnchorNode.click();
+
+    downloadAnchorNode.remove();
+    URL.revokeObjectURL(url);
+});
 
 const debounced = gameStateStore.gameState.toDebounced(100);
 
@@ -147,7 +149,14 @@ const debounced = gameStateStore.gameState.toDebounced(100);
                             clearable
                             map-options
                         />
-                        <q-btn class="q-mt-md" color="primary" label="Download simulation results" @click="downloadResults" />
+                        <q-btn
+                            class="q-mt-md"
+                            color="primary"
+                            label="Download simulation results"
+                            @click="downloadResults"
+                            :disable="downloadingResults.isLoading()"
+                            :loading="downloadingResults.isLoading()"
+                        />
                         
                         <div class="q-mt-md inspector-heading">Overview</div>
                         <q-markup-table flat class="q-mt-md">

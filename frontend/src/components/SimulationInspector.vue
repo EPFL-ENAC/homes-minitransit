@@ -10,10 +10,6 @@ const props = defineProps<{
 <template>
     <tbody>
         <tr>
-            <td>Simulation hour</td>
-            <td class="text-right">{{ props.simulation.simulation_hour }}</td>
-        </tr>
-        <tr>
             <td>Total demand</td>
             <td class="text-right">{{ props.simulation.demands_processed }}</td>
         </tr>
