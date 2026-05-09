@@ -145,7 +145,6 @@ def _run_simulation(
             f"{inputs.city_name}_time_dependent_demands.csv",
         ),
     )
-    print(inputs)
     runner.add_services_from_dict(inputs.services)
     result = runner.run_simulation(inputs.input_params)
 

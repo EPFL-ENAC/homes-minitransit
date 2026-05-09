@@ -15,7 +15,9 @@ export interface OnDemandServiceJSON {
     capacity: number;
     vehicles: Vehicle[];
     docking_stations: DockingStation[];
-    base_fare?: number;
+    ondemand_base_fare: number;
+    ondemand_time_rate_per_minute: number;
+    ondemand_base_time_cutoff_minutes: number;
 }
 
 export interface Vehicle {

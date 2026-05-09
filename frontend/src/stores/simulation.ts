@@ -20,7 +20,6 @@ export interface SimulationResult {
     message: string;
     routes: SimulationRoute[];
     simulation_time: string;
-    simulation_hour: number;
     demands_processed: number;
     input_demands_count: number;
     sampling_enabled: boolean;
